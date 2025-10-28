@@ -2201,7 +2201,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
-			--theme_tag = "ElementCorner",
+			----theme_tag = "ElementCorner",
 		},
 
 		create "UIPadding" {
@@ -2342,7 +2342,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
-			theme_tag = "ElementCorner",
+			--theme_tag = "ElementCorner",
 		},
 
 		create "UIStroke" {
@@ -2673,7 +2673,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
-			theme_tag = "ElementCorner",
+			--theme_tag = "ElementCorner",
 		},
 
 		create "UIPadding" {
@@ -3077,7 +3077,7 @@ local function range_slider_new(section: Section, props: RangeSliderProps): Rang
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
-			theme_tag = "ElementCorner",
+			--theme_tag = "ElementCorner",
 		},
 
 		create "UIPadding" {
@@ -3268,7 +3268,7 @@ local function keybind_new(section: Section, props: KeybindProps): Keybind
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
-			theme_tag = "ElementCorner",
+			--theme_tag = "ElementCorner",
 		},
 
 		create "UIPadding" {
@@ -3511,7 +3511,7 @@ local function slider_new(section: Section, props: SliderProps): Slider
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
-			theme_tag = "ElementCorner",
+			--theme_tag = "ElementCorner",
 		},
 
 		create "UIPadding" {
@@ -3777,7 +3777,7 @@ local function toggle_new(section: Section, props: ToggleProps): Toggle
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
-			theme_tag = "ElementCorner",
+			--theme_tag = "ElementCorner",
 		},
 
 		create "UIPadding" {
@@ -3949,7 +3949,7 @@ local function button_new(section: Section, props: ButtonProps): Button
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
-			theme_tag = "ElementCorner",
+			--theme_tag = "ElementCorner",
 		},
 
 		create "UIPadding" {
@@ -4130,7 +4130,7 @@ local function input_new(section: Section, props: InputProps): Input
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
-			theme_tag = "ElementCorner",
+			--theme_tag = "ElementCorner",
 		},
 
 		create "UIPadding" {
