@@ -2465,12 +2465,20 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 	local con1 = button:GetPropertyChangedSignal("AbsolutePosition"):Connect(update_scroll_position)
 	local con2 = button:GetPropertyChangedSignal("AbsoluteSize"):Connect(update_scroll_position)
 
-	local con3 = UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1
-    	or input.UserInputType == Enum.UserInputType.Touch then
-			if dropdown.IsOpen then
-				dropdown.Close()
-			end
+	local ClickInputs = {
+		Enum.UserInputType.MouseButton1,
+		Enum.UserInputType.Touch
+	};
+	
+	local con3 = UserInputService.InputEnded:Connect(function(input, _gpe)
+		if _gpe then return end
+	
+		if not table.find(ClickInputs, input.UserInputType) then
+			return;
+		end
+	
+		if dropdown.IsOpen then
+			dropdown.Close();
 		end
 	end)
 
