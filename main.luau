@@ -2465,11 +2465,21 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 	local con1 = button:GetPropertyChangedSignal("AbsolutePosition"):Connect(update_scroll_position)
 	local con2 = button:GetPropertyChangedSignal("AbsoluteSize"):Connect(update_scroll_position)
 
+	local con3 = UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+    	or input.UserInputType == Enum.UserInputType.Touch then
+			if dropdown.IsOpen then
+				dropdown.Close()
+			end
+		end
+	end)
+
 	table.insert(window.cleanups, function()
 		scroll_container:Destroy()
 		con0:Disconnect()
 		con1:Disconnect()
 		con2:Disconnect()
+		con3:Disconnect()
 	end)
 
 	table.insert(section.elements, dropdown)
@@ -3647,7 +3657,7 @@ local function divider_new(section: Section, props: DividerProps): Divider
 	local transparency = motion(1)
 	section.visible:listen(function(visible)
 		if visible then
-			transparency:spring(get_themed_property(window, "Divider", "BackgroundTransparency"), springs.soft)
+			transparency:spring(get_themed_property(window, "Line", "BackgroundTransparency"), springs.soft)
 		else
 			transparency:spring(1, springs.soft)
 		end
