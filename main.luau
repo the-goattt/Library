@@ -2377,7 +2377,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 
 	local function update_divider()
 		if open:get() then
-			divider_transparency:spring(get_themed_property(window, "Divider", "BackgroundTransparency"), springs.fast_soft)
+			divider_transparency:spring(get_themed_property(window, "Line", "BackgroundTransparency"), springs.fast_soft)
 		else
 			divider_transparency:spring(1, springs.fast_soft)
 		end
@@ -2435,7 +2435,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 			dropdown_transparency:spring(get_themed_property(window, "ContentContainer", "BackgroundTransparency"), springs.soft)
 			dropdown_stroke_transparency:spring(get_themed_property(window, "ElementStroke", "Transparency"), springs.soft)
 			search_box_transparency:spring(0, springs.fast_soft)	
-			divider_transparency:spring(get_themed_property(window, "Divider", "BackgroundTransparency"), springs.fast_soft)
+			divider_transparency:spring(get_themed_property(window, "Line", "BackgroundTransparency"), springs.fast_soft)
 		else
 			-- if dropdown is closing, make sure they cant still add text to the search box
 			scroll_container.Interactable = false
