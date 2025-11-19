@@ -4584,6 +4584,10 @@ local function window_new(self: Library, props: WindowProps): Window
 
 		self.container:Destroy()
 		table.clear(self)
+
+		if GLOBAL_GUI then
+			GLOBAL_GUI:Destroy()
+		end
 	end
 
 	local dir = props.Folder or props.Title
