@@ -1740,7 +1740,8 @@ local function REGISTER_FONT(id: string)
 end
 
 local fonts = {
-	builder_sans = REGISTER_FONT "rbxassetid://16658221428",
+	builder_sans = REGISTER_FONT "rbxassetid://12187365364",
+	--builder_sans = REGISTER_FONT "rbxassetid://16658221428",
 	-- inter = REGISTER_FONT "rbxassetid://12187365364",
 }
 
