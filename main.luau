@@ -1740,8 +1740,16 @@ local function REGISTER_FONT(id: string)
 end
 
 local fonts = {
-	builder_sans = REGISTER_FONT "rbxassetid://16658221428",
+	builder_sans = REGISTER_FONT "rbxassetid://12187365364", -- ACTUALLY INTER
+	--builder_sans = REGISTER_FONT "rbxassetid://16658221428",
 	-- inter = REGISTER_FONT "rbxassetid://12187365364",
+}
+
+local fontSizes = {
+	title = 14,
+	subtitle = 13,
+	body = 12,
+	small = 11,
 }
 
 local function NEXT_ORDER<Props>(section: Section, props: Props & { Order: number? }): number
@@ -1909,7 +1917,7 @@ local function notification_new(window: Window, props: NotificationProps): Notif
 			Size = UDim2.new(1, 0, 0, 15),
 			Text = props.Title,
 			TextColor3 = Color3.fromRGB(235, 235, 235),
-			TextSize = 15,
+			TextSize = fontSizes.title,
 			TextWrapped = true,
 			TextTransparency = title_text_transparency,
 			TextXAlignment = Enum.TextXAlignment.Left,
@@ -1925,7 +1933,7 @@ local function notification_new(window: Window, props: NotificationProps): Notif
 			Size = UDim2.fromScale(1, 0),
 			Text = props.Text,
 			TextColor3 = Color3.fromRGB(200, 200, 200),
-			TextSize = 13,
+			TextSize = fontSizes.body,
 			TextWrapped = true,
 			TextTransparency = content_text_transparency,
 			TextXAlignment = Enum.TextXAlignment.Left,
@@ -1938,8 +1946,8 @@ local function notification_new(window: Window, props: NotificationProps): Notif
 
 		create "UIPadding" {
 			PaddingBottom = UDim.new(0, 10),
-			PaddingLeft = UDim.new(0, 10),
-			PaddingRight = UDim.new(0, 10),
+			PaddingLeft = UDim.new(0, 12),
+			PaddingRight = UDim.new(0, 12),
 			PaddingTop = UDim.new(0, 10),
 		},
 
@@ -2069,7 +2077,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 				Size = UDim2.new(1, 0, 0, 13),
 				Text = item,
 				TextColor3 = text_color,
-				TextSize = 13,
+				TextSize = fontSizes.body,
 				TextWrapped = true,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				LayoutOrder = order,
@@ -2170,7 +2178,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		Size = UDim2.fromOffset(90, 19),
 		Text = value,
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.small,
 		TextWrapped = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextTransparency = section.content_transparency,
@@ -2220,7 +2228,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 			Size = UDim2.fromScale(1, 0),
 			Text = title,
 			TextColor3 = Color3.fromRGB(235, 235, 235),
-			TextSize = 13,
+			TextSize = fontSizes.body,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTransparency = section.content_transparency,
@@ -2308,7 +2316,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		Size = UDim2.new(1, 0, 0, 21),
 		Text = "",
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.body,
 		TextWrapped = true,
 		TextTransparency = search_box_transparency,
 		TextXAlignment = Enum.TextXAlignment.Left,
@@ -2469,16 +2477,16 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		Enum.UserInputType.MouseButton1,
 		Enum.UserInputType.Touch
 	};
-	
+
 	local con3 = UserInputService.InputEnded:Connect(function(input, _gpe)
 		if _gpe then return end
-	
+
 		if not table.find(ClickInputs, input.UserInputType) then
 			return;
 		end
-	
+
 		if dropdown.IsOpen then
-			dropdown.Close();
+			dropdown:Close()
 		end
 	end)
 
@@ -2578,7 +2586,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		Size = UDim2.fromOffset(20, 19),
 		Text = tostring(to_value(default_value.R)),
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.body,
 		TextTransparency = section.content_transparency,
 		theme_tag = "Box",
 
@@ -2606,7 +2614,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		Size = UDim2.fromOffset(20, 19),
 		Text = tostring(to_value(default_value.G)),
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.body,
 		TextTransparency = section.content_transparency,
 		theme_tag = "Box",
 
@@ -2634,7 +2642,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		Size = UDim2.fromOffset(20, 19),
 		Text = tostring(to_value(default_value.B)),
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.body,
 		TextTransparency = section.content_transparency,
 		theme_tag = "Box",
 
@@ -2669,7 +2677,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			Text = title,
 			theme_tag = "Primary",
 			TextColor3 = Color3.fromRGB(235, 235, 235),
-			TextSize = 13,
+			TextSize = fontSizes.body,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTransparency = section.content_transparency,
@@ -2844,7 +2852,7 @@ local function range_slider_new(section: Section, props: RangeSliderProps): Rang
 		Size = UDim2.fromOffset(20, 19),
 		Text = tostring(default_value.x),
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.body,
 		TextWrapped = false,
 		theme_tag = "Box",
 
@@ -2884,7 +2892,7 @@ local function range_slider_new(section: Section, props: RangeSliderProps): Rang
 		Size = UDim2.fromOffset(20, 19),
 		Text = tostring(default_value.y),
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.body,
 		TextWrapped = false,
 		theme_tag = "Box",
 
@@ -3073,7 +3081,7 @@ local function range_slider_new(section: Section, props: RangeSliderProps): Rang
 			Text = title,
 			theme_tag = "Primary",
 			TextColor3 = Color3.fromRGB(235, 235, 235),
-			TextSize = 13,
+			TextSize = fontSizes.body,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTransparency = section.content_transparency,
@@ -3232,7 +3240,7 @@ local function keybind_new(section: Section, props: KeybindProps): Keybind
 		Text = get_text_for_key(default_value),
 		TextTransparency = section.content_transparency,
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.body,
 		TextWrapped = false,
 		theme_tag = "Box",
 
@@ -3271,7 +3279,7 @@ local function keybind_new(section: Section, props: KeybindProps): Keybind
 			theme_tag = "Primary",
 			TextColor3 = Color3.fromRGB(235, 235, 235),
 			TextTransparency = section.content_transparency,
-			TextSize = 13,
+			TextSize = fontSizes.body,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 
@@ -3493,7 +3501,7 @@ local function slider_new(section: Section, props: SliderProps): Slider
 		Text = tostring(default_value),
 		TextTransparency = section.content_transparency,
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.body,
 		TextWrapped = false,
 		theme_tag = "Box",
 
@@ -3579,7 +3587,7 @@ local function slider_new(section: Section, props: SliderProps): Slider
 			theme_tag = "Primary",
 			TextColor3 = Color3.fromRGB(235, 235, 235),
 			TextTransparency = section.content_transparency,
-			TextSize = 13,
+			TextSize = fontSizes.body,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 
@@ -3882,7 +3890,7 @@ local function toggle_new(section: Section, props: ToggleProps): Toggle
 			theme_tag = "Primary",
 			TextColor3 = Color3.fromRGB(235, 235, 235),
 			TextTransparency = section.content_transparency,
-			TextSize = 13,
+			TextSize = fontSizes.body,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 
@@ -3998,7 +4006,7 @@ local function button_new(section: Section, props: ButtonProps): Button
 				theme_tag = "Secondary",
 				TextColor3 = Color3.fromRGB(200, 200, 200),
 				TextTransparency = section.content_transparency,
-				TextSize = 12,
+				TextSize = fontSizes.small,
 				TextWrapped = false,
 				TextXAlignment = Enum.TextXAlignment.Right,
 			},
@@ -4027,7 +4035,7 @@ local function button_new(section: Section, props: ButtonProps): Button
 			theme_tag = "Primary",
 			TextColor3 = Color3.fromRGB(235, 235, 235),
 			TextTransparency = section.content_transparency,
-			TextSize = 13,
+			TextSize = fontSizes.body,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 
@@ -4116,7 +4124,7 @@ local function input_new(section: Section, props: InputProps): Input
 		Text = default_value or "",
 		TextTransparency = section.content_transparency,
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 13,
+		TextSize = fontSizes.body,
 		theme_tag = "InputBox",
 
 		create "UICorner" {
@@ -4168,7 +4176,7 @@ local function input_new(section: Section, props: InputProps): Input
 			Size = UDim2.fromScale(1, 0),
 			Text = title,
 			TextColor3 = Color3.fromRGB(235, 235, 235),
-			TextSize = 13,
+			TextSize = fontSizes.body,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			theme_tag = "Primary",
@@ -4329,7 +4337,8 @@ local function section_new(tab: Tab, props: SectionProps): Section
 					Text = title,
 					TextTransparency = content_transparency,
 					TextColor3 = Color3.fromRGB(235, 235, 235),
-					TextScaled = true,
+					TextScaled = false,
+					TextSize = fontSizes.title,
 					theme_tag = "Primary",
 				},
 
@@ -4450,7 +4459,7 @@ local function tab_new(window: Window, props: TabProps): Tab
 			Size = UDim2.new(1, 0, 0, 14),
 			Text = title,
 			TextColor3 = label_color,
-			TextSize = 14,
+			TextSize = fontSizes.subtitle,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			theme_tag = "TabLabel",
@@ -5021,7 +5030,8 @@ local function window_new(self: Library, props: WindowProps): Window
 				Size = UDim2.new(1, 0, 0, 15),
 				Text = "Close Window",
 				TextColor3 = Color3.fromRGB(235, 235, 235),
-				TextScaled = true,
+				TextScaled = false,
+				TextSize = fontSizes.title,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTransparency = notification_title_transparency,
 				theme_tag = "Primary",
@@ -5038,7 +5048,9 @@ local function window_new(self: Library, props: WindowProps): Window
 				Size = UDim2.new(1, 0, 0, 26),
 				Text = "Are you sure you want to close the window? This action cannot be undone.",
 				TextColor3 = Color3.fromRGB(200, 200, 200),
-				TextScaled = true,
+				TextScaled = false,
+				TextWrapped = true,
+				TextSize = fontSizes.body,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextYAlignment = Enum.TextYAlignment.Top,
 				TextTransparency = notification_content_transparency,
@@ -5071,7 +5083,7 @@ local function window_new(self: Library, props: WindowProps): Window
 					Size = UDim2.new(0.5, -2, 1, 0),
 					Text = "Close",
 					TextColor3 = Color3.fromRGB(235, 235, 235),
-					TextSize = 13,
+					TextSize = fontSizes.body,
 					TextWrapped = true,
 					TextTransparency = box_text_transparency,
 					theme_tag = "DialogueClose",
@@ -5095,7 +5107,7 @@ local function window_new(self: Library, props: WindowProps): Window
 					Size = UDim2.new(0.5, -2, 1, 0),
 					Text = "Cancel",
 					TextColor3 = Color3.fromRGB(200, 200, 200),
-					TextSize = 13,
+					TextSize = fontSizes.body,
 					TextWrapped = true,
 					TextTransparency = element_text_transparency,
 
@@ -5291,8 +5303,9 @@ local function window_new(self: Library, props: WindowProps): Window
 					Position = UDim2.new(0, 34, 0.5, 0),
 					Size = UDim2.fromOffset(0, 15),
 					Text = title,
+					TextSize = fontSizes.title,
 					TextColor3 = Color3.fromRGB(235, 235, 235),
-					TextScaled = true,
+					TextScaled = false,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					theme_tag = "TopbarTitle"
 				},
@@ -5305,7 +5318,7 @@ local function window_new(self: Library, props: WindowProps): Window
 					Position = UDim2.fromScale(0, 1),
 					Size = UDim2.new(1, 0, 0, 1),
 					theme_tag = "Topbar",
-					
+
 					create "Frame" {
 						AnchorPoint = Vector2.new(0.5, 0),
 						BackgroundColor3 = Color3.fromRGB(50, 50, 50),
