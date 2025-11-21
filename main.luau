@@ -2440,7 +2440,9 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		if open then
 			calculate_scroll_size()
 			scroll_container.Interactable = true
+			scroll_container.ZIndex = 2
 			scroll_container.Visible = true
+			
 			dropdown_size:spring(dropdown_target_size, springs.fast_soft)
 			dropdown_transparency:spring(get_themed_property(window, "ContentContainer", "BackgroundTransparency"), springs.soft)
 			dropdown_stroke_transparency:spring(get_themed_property(window, "ElementStroke", "Transparency"), springs.soft)
@@ -2448,6 +2450,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 			divider_transparency:spring(get_themed_property(window, "Line", "BackgroundTransparency"), springs.fast_soft)
 		else
 			-- if dropdown is closing, make sure they cant still add text to the search box
+			scroll_container.ZIndex = 1
 			scroll_container.Interactable = false
 
 			if search_box:IsFocused() then
