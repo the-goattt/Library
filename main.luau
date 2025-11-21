@@ -2194,7 +2194,9 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		},
 
 		Activated = function()
-			dropdown_toggle(dropdown :: any)
+			if tab.selected:get() then
+				dropdown_open(dropdown :: any)
+			end
 		end,
 	} :: TextButton
 
