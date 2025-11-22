@@ -4701,6 +4701,23 @@ local function window_new(self: Library, props: WindowProps): Window
 		return config
 	end
 
+	local function window_copy_config(self: Window, name: string)
+		ensure_folder(dir)
+		ensure_folder(config_directory)
+
+		if not isfile(`{config_directory}/{name}.config`) then
+			return
+		end
+
+		local config = readfile(`{config_directory}/{name}.config`)
+
+		if not config then
+			return
+		end 
+
+		return config
+	end
+
 	-- this function is automatically called after all elements are created inside the main script. new users will also have this executed (and they dont have any cfg files)
 	local function window_load_config(self: Window, name: string?)
 		if not name then
@@ -4754,11 +4771,9 @@ local function window_new(self: Library, props: WindowProps): Window
 
 		if not content then
 			-- create default
-			print("creating default", config_name)
 			window_save_config(self, config_name)
 		else
 			-- load default
-			print("loading default", config_name)
 			window_load_config(self, content)
 		end
 	end
@@ -4879,6 +4894,7 @@ local function window_new(self: Library, props: WindowProps): Window
 		SaveConfig = window_save_config,
 		CreateConfig = window_create_config,
 		GetConfig = window_get_config,
+		CopyConfig = window_copy_config,
 		LoadConfig = window_load_config,
 		GetConfigs = window_get_configs,
 
