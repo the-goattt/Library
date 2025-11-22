@@ -4677,9 +4677,7 @@ local function window_new(self: Library, props: WindowProps): Window
 
 		ensure_folder(dir)
 		ensure_folder(config_directory)
-
-		local content = encode_config(flags)
-		writefile(`{config_directory}/{name}.config`, content)
+		writefile(`{config_directory}/{name}.config`, flags)
 	end
 
 	local function window_get_config(self: Window, name: string) -- name always inputted, it can be 'default' for some.
