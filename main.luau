@@ -4666,7 +4666,6 @@ local function window_new(self: Library, props: WindowProps): Window
 		ensure_folder(config_directory)
 
 		local content = encode_config(self.Flags)
-		print("saved")
 		writefile(`{config_directory}/{name}.config`, content)
 		return content
 	end
@@ -4680,7 +4679,6 @@ local function window_new(self: Library, props: WindowProps): Window
 		ensure_folder(config_directory)
 
 		local content = encode_config(flags)
-		print("created")
 		writefile(`{config_directory}/{name}.config`, content)
 	end
 
