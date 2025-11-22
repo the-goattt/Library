@@ -4770,7 +4770,7 @@ local function window_new(self: Library, props: WindowProps): Window
 			window_save_config(self, config_name)
 		else
 			-- load default
-			window_load_config(self, content)
+			window_load_config(self, config_name)
 		end
 	end
 
