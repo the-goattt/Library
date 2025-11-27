@@ -918,6 +918,7 @@ export type Dropdown = {
 	Close: (self: Dropdown) -> (),
 	Toggle: (self: Dropdown) -> (),
 	IsOpen: boolean,
+	Multi: boolean,
 
 	SetItems: (self: Dropdown, items: { string }) -> (),
 
@@ -930,15 +931,18 @@ export type Dropdown = {
 	instance: Frame,
 }
 
-export type DropdownProps = {
+export type DropdownProps<Value = string> = {
 	Title: string,
-	DefaultValue: string,
+	DefaultValue: Value,
 	Items: { string },
-	Callback: ((Selected: string) -> ())?,
-
+	Callback: ((Selected: Value) -> ())?,
+	Multi: boolean,
+	
 	Flag: string?,
 	Order: number?,
 }
+
+export type MultiDropdownProps = DropdownProps<{string}> & { Multi: true }
 
 export type Element = Toggle | Divider | Slider | Keybind | RangeSlider | ColorPicker | Dropdown | Button | Input
 
@@ -1993,8 +1997,8 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 	local title = props.Title
 
 	local default_value = props.DefaultValue
-	local callbacks: { (string) -> () } = if props.Callback then { props.Callback } else {}
-	local value = source(default_value)
+	local callbacks: { (string | {string}) -> () } = if props.Callback then { props.Callback :: any } else {}
+	local value = source(default_value :: string | {string})
 
 	local dropdown_scroll: ScrollingFrame, scroll_list_layout: UIListLayout
 	local item_cleanups: { () -> () }
@@ -2020,8 +2024,13 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 			local font = source(fonts.builder_sans.regular)
 
 			local function spring_motions()
-				local is_selected = value:get() == item
-
+				local value = value:get() :: string | {string}
+				local is_selected =
+					if props.Multi then
+						table.find(value :: {string}, item)
+					else
+						value == item
+				
 				font:set(if is_selected then fonts.builder_sans.medium else fonts.builder_sans.regular)
 
 				if visible then
@@ -2086,7 +2095,25 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 				Visible = item_visible,
 
 				Activated = function()
-					value:set(item)
+					local new_value: string | {string}
+					if props.Multi then
+						-- multi dropdown
+						
+						local new_items = table.clone(value:get() :: {string}) :: {string}
+						local existing_idx = table.find(new_items, item)
+						if existing_idx then
+							-- remove if already in there
+							table.remove(new_items, existing_idx)
+						else
+							-- add
+							table.insert(new_items, item)
+						end
+						new_value = new_items
+					else
+						new_value = item
+					end
+					
+					value:set(new_value)
 					open:set(false)
 				end,
 
@@ -2103,14 +2130,22 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 			} :: TextButton
 		end
 
+		-- clear old
 		if item_cleanups then
 			for _, cleanup in item_cleanups do
 				cleanup()
 			end
 		end
+		
+		for _, old_button in dropdown_scroll:GetChildren() do
+			if old_button:IsA("TextButton") then
+				old_button:Destroy()
+			end
+		end
 
 		local item_count = #items
 		item_cleanups = table.create(item_count)
+		
 
 		for order, item in items do
 			button(item, order).Parent = dropdown_scroll
@@ -2145,20 +2180,22 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		default_value = default_value,
 
 		Value = value,
-
+		
+		Multi = props.Multi or false,
+		
 		Open = dropdown_open,
 		Close = dropdown_close,
 		Toggle = dropdown_toggle,
 		IsOpen = false,
 	}
 
-	local function fire_listeners(value: string)
+	local function fire_listeners(value: string | {string})
 		for _, callback in callbacks do
 			task.spawn(callback, value)
 		end
 	end
 
-	local function dropdown_listen(self: Dropdown, callback: (string) -> ()): () -> ()
+	local function dropdown_listen(self: Dropdown, callback: (string | {string}) -> ()): () -> ()
 		local idx = #callbacks + 1
 		callbacks[idx] = callback
 		return function()
@@ -2167,6 +2204,16 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		end
 	end
 	dropdown.Listen = dropdown_listen
+	
+	local text
+	if props.Multi then
+		text = source(table.concat(value:get() :: {string}, ", "))
+		value:listen(function(selected)
+			text:set(table.concat(selected :: {string}, ", "))
+		end)
+	else
+		text = value :: any
+	end
 
 	local button = create "TextButton" {
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -2176,7 +2223,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		FontFace = fonts.builder_sans.regular,
 		Position = UDim2.fromScale(1, 0.5),
 		Size = UDim2.fromOffset(90, 19),
-		Text = value,
+		Text = text,
 		TextColor3 = Color3.fromRGB(235, 235, 235),
 		TextSize = fontSizes.small,
 		TextWrapped = true,
@@ -2402,9 +2449,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		end
 	end)
 
-	value:listen(function(selected: string)
-		fire_listeners(selected)
-	end)
+	value:listen(fire_listeners)
 
 	dropdown_set_items(dropdown, items)
 
@@ -2442,7 +2487,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 			scroll_container.Interactable = true
 			scroll_container.ZIndex = 2
 			scroll_container.Visible = true
-			
+
 			dropdown_size:spring(dropdown_target_size, springs.fast_soft)
 			dropdown_transparency:spring(get_themed_property(window, "ContentContainer", "BackgroundTransparency"), springs.soft)
 			dropdown_stroke_transparency:spring(get_themed_property(window, "ElementStroke", "Transparency"), springs.soft)
@@ -2520,6 +2565,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 	local default_value = props.DefaultValue
 	local callbacks: { (Color3) -> () } = if props.Callback then { props.Callback } else {}
 	local value = source(default_value)
+	
 	local color_picker = {
 		kind = "color_picker" :: "color_picker",
 
@@ -2534,11 +2580,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 
 		Value = value,
 	}
-
-	local function to_value(rgb: number): number
-		return math.round(rgb * 255)
-	end
-
+	
 	local function fire_listeners(value: Color3)
 		for _, callback in callbacks do
 			task.spawn(callback, value)
@@ -2554,7 +2596,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		end
 	end
 	color_picker.Listen = color_picker_listen
-
+	
 	local function focus_lost(text_box: TextBox, property: "R" | "G" | "B"): RBXScriptConnection
 		local function reconstruct(value: number, current: Color3)
 			if property == "R" then
@@ -2579,90 +2621,328 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			end
 		end)
 	end
+	
+	local hex_box = create "TextBox" {
+		BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+		BackgroundTransparency = 0.1,
+		FontFace = fonts.builder_sans.regular,
+		Position = UDim2.fromOffset(0, 116),
+		Size = UDim2.fromOffset(60, 20),
+		Text = "HEX",
+		TextColor3 = Color3.fromRGB(235, 235, 235),
+		TextSize = fontSizes.body,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		theme_tag = "Box",
 
+		create "UICorner" {
+			CornerRadius = UDim.new(0, 4),
+		},
+
+		create "UIPadding" {
+			PaddingLeft = UDim.new(0, 6),
+			PaddingRight = UDim.new(0, 6),
+		},
+	} :: TextBox
+	hex_box.FocusLost:Connect(function(enter_pressed)
+		if enter_pressed then
+			local text = hex_box.Text
+			local new_color = Color3.fromHex(text)
+			if new_color then
+				value:set(new_color)
+			end
+		end
+	end)
+	
 	local box_r = create "TextBox" {
-		AnchorPoint = Vector2.new(1, 0.5),
-		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-		BackgroundTransparency = section.box_bg_transparency,
+		BackgroundTransparency = 0.1,
 		FontFace = fonts.builder_sans.regular,
-		PlaceholderColor3 = Color3.fromRGB(178, 178, 178),
-		Position = UDim2.new(1, -116, 0.5, 0),
-		Size = UDim2.fromOffset(20, 19),
-		Text = tostring(to_value(default_value.R)),
+		Position = UDim2.fromOffset(0, 140),
+		Size = UDim2.fromOffset(30, 20),
+		Text = "255",
 		TextColor3 = Color3.fromRGB(235, 235, 235),
 		TextSize = fontSizes.body,
-		TextTransparency = section.content_transparency,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
 		theme_tag = "Box",
 
 		create "UICorner" {
-			CornerRadius = UDim.new(0, 5), --boxcorner
+			CornerRadius = UDim.new(0, 4),
 		},
 
 		create "UIPadding" {
-			PaddingLeft = UDim.new(0, 7),
-			PaddingRight = UDim.new(0, 7),
+			PaddingLeft = UDim.new(0, 6),
+			PaddingRight = UDim.new(0, 6),
 		},
 	} :: TextBox
-
 	focus_lost(box_r, "R")
-
+	
 	local box_g = create "TextBox" {
-		AnchorPoint = Vector2.new(1, 0.5),
-		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-		BackgroundTransparency = section.box_bg_transparency,
+		BackgroundTransparency = 0.1,
 		FontFace = fonts.builder_sans.regular,
-		LayoutOrder = 1,
-		PlaceholderColor3 = Color3.fromRGB(178, 178, 178),
-		Position = UDim2.new(1, -116, 0.5, 0),
-		Size = UDim2.fromOffset(20, 19),
-		Text = tostring(to_value(default_value.G)),
+		Position = UDim2.fromOffset(34, 140),
+		Size = UDim2.fromOffset(30, 20),
+		Text = "255",
 		TextColor3 = Color3.fromRGB(235, 235, 235),
 		TextSize = fontSizes.body,
-		TextTransparency = section.content_transparency,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
 		theme_tag = "Box",
 
 		create "UICorner" {
-			CornerRadius = UDim.new(0, 5), --boxcorner
+			CornerRadius = UDim.new(0, 4),
 		},
 
 		create "UIPadding" {
-			PaddingLeft = UDim.new(0, 7),
-			PaddingRight = UDim.new(0, 7),
+			PaddingLeft = UDim.new(0, 6),
+			PaddingRight = UDim.new(0, 6),
 		},
 	} :: TextBox
-
 	focus_lost(box_g, "G")
-
+	
 	local box_b = create "TextBox" {
-		AnchorPoint = Vector2.new(1, 0.5),
-		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-		BackgroundTransparency = section.box_bg_transparency,
+		BackgroundTransparency = 0.1,
 		FontFace = fonts.builder_sans.regular,
-		LayoutOrder = 2,
-		PlaceholderColor3 = Color3.fromRGB(178, 178, 178),
-		Position = UDim2.new(1, -116, 0.5, 0),
-		Size = UDim2.fromOffset(20, 19),
-		Text = tostring(to_value(default_value.B)),
+		Position = UDim2.fromOffset(68, 140),
+		Size = UDim2.fromOffset(30, 20),
+		Text = "255",
 		TextColor3 = Color3.fromRGB(235, 235, 235),
 		TextSize = fontSizes.body,
-		TextTransparency = section.content_transparency,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
 		theme_tag = "Box",
 
 		create "UICorner" {
-			CornerRadius = UDim.new(0, 5), --boxcorner
+			CornerRadius = UDim.new(0, 4),
 		},
 
 		create "UIPadding" {
-			PaddingLeft = UDim.new(0, 7),
-			PaddingRight = UDim.new(0, 7),
+			PaddingLeft = UDim.new(0, 6),
+			PaddingRight = UDim.new(0, 6),
 		},
 	} :: TextBox
-
 	focus_lost(box_b, "B")
+	
+	local move_connection: RBXScriptConnection?
+	local color_container: CanvasGroup
+	local hue_container: ImageLabel
+	
+	local color_picker_position = source(UDim2.fromScale(0, 0))
+	local hue_picker_position = source(UDim2.fromScale(0, 0.5))
+	local gradient_color = source(ColorSequence.new(Color3.new()))
+	
+	local last_hue, last_sat = value:get():ToHSV()
+	
+	value:listen(function(color)
+		local h, s, v = color:ToHSV()
+		
+		-- preserve hue & sat
+		if v == 0 then
+			h = last_hue
+			s = last_sat
+		else
+			last_hue = h
+			last_sat = s
+		end
+		
+		color_picker_position:set(UDim2.fromScale(s, 1 - v))
+		hue_picker_position:set(UDim2.fromScale(h, 0.5))
+		gradient_color:set(ColorSequence.new(
+			Color3.new(1, 1, 1),
+			Color3.fromHSV(h, 1, 1)
+		))
+	end)
+	
+	color_container = create "CanvasGroup" {
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		Size = UDim2.new(1, 0, 0, 90),
+		
+		InputBegan = function(input: InputObject)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				if move_connection then
+					move_connection:Disconnect()
+				end
 
+				move_connection = RunService.PreRender:Connect(function()
+					local mouse_location = UserInputService:GetMouseLocation() - Vector2.yAxis * GuiService.TopbarInset.Height
+					
+					-- relative position (scale)
+					local position = (mouse_location - color_container.AbsolutePosition) / color_container.AbsoluteSize
+					
+					--local old_h, old_s, old_v = value:get():ToHSV()
+					
+					--local h = value:get():ToHSV() -- keep old hue
+					local h = last_hue
+					local s = math.clamp(position.X, 0, 1)
+					local v = math.clamp(1 - position.Y, 0, 1)
+					
+					last_sat = s
+					
+					local color = Color3.fromHSV(h, s, v)
+					value:set(color)
+				end)
+			end
+		end,
+
+		InputEnded = function(input: InputObject)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 and move_connection then
+				move_connection:Disconnect()
+			end
+		end,
+		
+		create "Frame" {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			BackgroundColor3 = Color3.new(),
+			--Position = UDim2.fromScale(0.5, 0.5),
+			Position = color_picker_position,
+			Size = UDim2.fromOffset(5, 5),
+			ZIndex = 2,
+			
+			create "UIStroke" {
+				ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+				Color = Color3.new(1, 1, 1),
+				Thickness = 1.5,
+			},
+
+			create "UICorner" {
+				CornerRadius = UDim.new(0.5, 0),
+			},
+		},
+
+		create "UICorner" {
+			CornerRadius = UDim.new(0, 4),
+		},
+
+		create "UIGradient" {
+			Color = gradient_color,
+		},
+
+		create "Frame" {
+			BackgroundColor3 = Color3.new(),
+			BorderColor3 = Color3.new(),
+			BorderSizePixel = 0,
+			Size = UDim2.fromScale(1, 1),
+
+			create "UIGradient" {
+				Rotation = -90,
+				Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0),
+					NumberSequenceKeypoint.new(1, 1),
+				}),
+			},
+		},
+	} :: CanvasGroup
+	
+	hue_container = create "Frame" {
+		AnchorPoint = Vector2.new(0.5, 0),
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		Position = UDim2.new(0.5, 0, 0, 98),
+		Size = UDim2.new(1, 0, 0, 7),
+		
+		InputBegan = function(input: InputObject)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				if move_connection then
+					move_connection:Disconnect()
+				end
+
+				move_connection = RunService.PreRender:Connect(function()
+					local mouse_location = UserInputService:GetMouseLocation() - Vector2.yAxis * GuiService.TopbarInset.Height
+
+					-- relative position (scale)
+					local position = (mouse_location - color_container.AbsolutePosition) / color_container.AbsoluteSize
+					
+					local hue = math.clamp(position.X, 0, 1)
+					last_hue = hue
+					
+					local color = Color3.fromHSV(
+						hue,
+						select(2, value:get():ToHSV()) -- keep sat & val the same
+					)
+					
+					value:set(color)
+				end)
+			end
+		end,
+
+		InputEnded = function(input: InputObject)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 and move_connection then
+				move_connection:Disconnect()
+			end
+		end,
+
+		create "Frame" {
+			AnchorPoint = Vector2.new(0, 0.5),
+			BackgroundColor3 = Color3.new(1, 1, 1),
+			--Position = UDim2.fromScale(0, 0.5),
+			Position = hue_picker_position,
+			Size = UDim2.fromOffset(7, 14),
+
+			create "UICorner" {
+				CornerRadius = UDim.new(1, 0),
+			},
+		},
+
+		create "UICorner" {
+			CornerRadius = UDim.new(1, 0),
+		},
+
+		create "UIGradient" {
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+				ColorSequenceKeypoint.new(0.125, Color3.fromRGB(255, 165, 0)),
+				ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 255, 0)),
+				ColorSequenceKeypoint.new(0.375, Color3.fromRGB(0, 255, 0)),
+				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+				ColorSequenceKeypoint.new(0.625, Color3.fromRGB(0, 0, 255)),
+				ColorSequenceKeypoint.new(0.75, Color3.fromRGB(128, 0, 128)),
+				ColorSequenceKeypoint.new(0.875, Color3.fromRGB(255, 0, 255)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0)),
+			}),
+		},
+	} :: ImageLabel
+	
+	local picker_frame = create "Frame" {
+		Active = true,
+		AnchorPoint = Vector2.new(1, 0.5),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = Color3.fromRGB(9, 10, 11),
+		ClipsDescendants = true,
+		--Position = UDim2.fromScale(0.714769, 0.42234),
+		Position = UDim2.fromScale(0, 0),
+		Selectable = true,
+		SelectionGroup = true,
+		Size = UDim2.fromOffset(180, 165),
+		Visible = false,
+		theme_tag = "ContentContainer",
+		
+		create "UICorner" {
+			CornerRadius = UDim.new(0, 6),
+		},
+		
+		create "UIStroke" {
+			Color = Color3.fromRGB(15, 16, 17),
+		},
+		
+		color_container,
+		hue_container,
+		
+		create "UIPadding" {
+			PaddingBottom = UDim.new(0, 10),
+			PaddingLeft = UDim.new(0, 10),
+			PaddingRight = UDim.new(0, 10),
+			PaddingTop = UDim.new(0, 10),
+		},
+
+		hex_box,
+		box_r,
+		box_g,
+		box_b,
+	} :: Frame
+	picker_frame.Parent = ensure_gui()
+	
 	local instance = create "Frame" {
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Color3.new(),
@@ -2730,12 +3010,6 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			Position = UDim2.fromScale(1, 0.5),
 			Selectable = true,
 
-			box_r,
-
-			box_g,
-
-			box_b,
-
 			create "UIListLayout" {
 				FillDirection = Enum.FillDirection.Horizontal,
 				HorizontalAlignment = Enum.HorizontalAlignment.Right,
@@ -2744,8 +3018,9 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 				VerticalAlignment = Enum.VerticalAlignment.Center,
 			},
 
-			create "Frame" {
+			create "TextButton" {
 				Active = true,
+				AutoButtonColor = false,
 				AnchorPoint = Vector2.new(1, 0.5),
 				AutomaticSize = Enum.AutomaticSize.X,
 				BackgroundColor3 = value,
@@ -2754,6 +3029,13 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 				Position = UDim2.new(1, -116, 0.5, 0),
 				Selectable = true,
 				Size = UDim2.fromOffset(19, 19),
+				TextTransparency = 1,
+				
+				Activated = function()
+					local mouse_location = UserInputService:GetMouseLocation()
+					picker_frame.Position = UDim2.fromOffset(mouse_location.X - 50, mouse_location.Y)
+					picker_frame.Visible = not picker_frame.Visible
+				end,
 
 				create "UICorner" {
 					CornerRadius = UDim.new(0, 4),
@@ -2768,19 +3050,46 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 	} :: Frame
 	instance.Parent = section.container
 	color_picker.instance = instance
+	
+	local ClickInputs = {
+		Enum.UserInputType.MouseButton1,
+		Enum.UserInputType.Touch
+	};
+	
+	local con3 = UserInputService.InputEnded:Connect(function(input, _gpe)
+		if _gpe then return end
+
+		if not table.find(ClickInputs, input.UserInputType) then
+			return;
+		end
+
+		if picker_frame.Visible then
+			picker_frame.Visible = false
+		end
+	end)
+
 
 	ELEMENT_FLAG(color_picker, section, props)
-
+	
+	local function to_value(rgb: number): number
+		return math.round(rgb * 255)
+	end
+	
 	value:listen(function(color)
+		color = Color3.new(
+			math.clamp(color.R, 0, 1),
+			math.clamp(color.G, 0, 1),
+			math.clamp(color.B, 0, 1)
+		)
 		fire_listeners(color)
-
+		
+		hex_box.Text = color:ToHex()
 		box_r.Text = tostring(to_value(color.R))
 		box_g.Text = tostring(to_value(color.G))
 		box_b.Text = tostring(to_value(color.B))
 	end)
 
 	table.insert(section.elements, color_picker)
-
 	active_window = nil
 	return color_picker
 end
