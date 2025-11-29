@@ -629,6 +629,8 @@ export type Window = {
 
 	Flags: { [string]: Element },
 
+	window_position: UDim2, 
+	
 	title: string,
 	config_folder: string,
 
@@ -4720,11 +4722,11 @@ local function tab_new(window: Window, props: TabProps): Tab
 			image_color:spring(get_themed_property(window, "TabIcon", "SelectedImageColor3"), springs.soft)
 			label_color:spring(get_themed_property(window, "TabLabel", "SelectedTextColor3"), springs.soft)
 		else
-			bg_transparency:spring(get_themed_property(window, "Tab", "DeselectedBackgroundTransparency") or 1, springs.soft)
-			stroke_transparency:spring(1, springs.soft)
+			bg_transparency:spring(get_themed_property(window, "Tab", "DeselectedBackgroundTransparency") or 1, springs.fast_soft)
+			stroke_transparency:spring(1, springs.fast_soft)
 
-			image_color:spring(get_themed_property(window, "TabIcon", "DeselectedImageColor3"), springs.soft)
-			label_color:spring(get_themed_property(window, "TabLabel", "DeselectedTextColor3"), springs.soft)
+			image_color:spring(get_themed_property(window, "TabIcon", "DeselectedImageColor3"), springs.fast_soft)
+			label_color:spring(get_themed_property(window, "TabLabel", "DeselectedTextColor3"), springs.fast_soft)
 		end
 	end
 
@@ -4857,7 +4859,7 @@ local function window_new(self: Library, props: WindowProps): Window
 
 		self.Minimized = true
 
-		position:spring(self.container.Position + UDim2.fromOffset(0, 30), springs.soft)
+		position:spring(self.window_position + UDim2.fromOffset(0, 30), springs.soft)
 		body_transparency:spring(1, springs.fast_soft)
 		container_transparency:spring(1, springs.fast_soft)
 		stroke_transparency:spring(1, springs.fast_soft)
@@ -4881,7 +4883,7 @@ local function window_new(self: Library, props: WindowProps): Window
 
 		self.container.Visible = true
 
-		position:spring(self.container.Position - UDim2.fromOffset(0, 30), springs.meow_bounce)
+		position:spring(self.window_position - UDim2.fromOffset(0, 30), springs.meow_bounce)
 		body_transparency:spring(0, springs.fast_soft)
 		container_transparency:spring(get_themed_property(self, "WindowShadow", "ImageTransparency"), springs.fast_soft)
 		stroke_transparency:spring(get_themed_property(self, "WindowStroke", "Transparency"), springs.fast_soft)
@@ -5215,6 +5217,8 @@ local function window_new(self: Library, props: WindowProps): Window
 
 		Flags = {},
 
+		window_position = UDim2.fromScale(0.5, 0.5),
+
 		title = title,
 		config_folder = props.Folder or `config-{title}`,
 
@@ -5530,6 +5534,7 @@ local function window_new(self: Library, props: WindowProps): Window
 			-- dragging the topbar that the topbar will drag with their cursor
 			local new_position = UDim2.fromOffset(mouse_location.X - drag_offset.X, mouse_location.Y - drag_offset.Y)
 
+			window.window_position = new_position
 			position:spring(new_position, springs.fast_soft)
 		end)
 	end
