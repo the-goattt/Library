@@ -630,7 +630,7 @@ export type Window = {
 	Flags: { [string]: Element },
 
 	window_position: UDim2, 
-	
+
 	title: string,
 	config_folder: string,
 
@@ -939,7 +939,7 @@ export type DropdownProps<Value = string> = {
 	Items: { string },
 	Callback: ((Selected: Value) -> ())?,
 	Multi: boolean,
-	
+
 	Flag: string?,
 	Order: number?,
 }
@@ -2030,10 +2030,10 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 				local value = value:get() :: string | {string}
 				local is_selected =
 					if props.Multi then
-						table.find(value :: {string}, item)
+					table.find(value :: {string}, item)
 					else
-						value == item
-				
+					value == item
+
 				font:set(if is_selected then fonts.builder_sans.medium else fonts.builder_sans.regular)
 
 				if visible then
@@ -2101,7 +2101,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 					local new_value: string | {string}
 					if props.Multi then
 						-- multi dropdown
-						
+
 						local new_items = table.clone(value:get() :: {string}) :: {string}
 						local existing_idx = table.find(new_items, item)
 						if existing_idx then
@@ -2115,7 +2115,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 					else
 						new_value = item
 					end
-					
+
 					value:set(new_value)
 					open:set(false)
 				end,
@@ -2139,7 +2139,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 				cleanup()
 			end
 		end
-		
+
 		for _, old_button in dropdown_scroll:GetChildren() do
 			if old_button:IsA("TextButton") then
 				old_button:Destroy()
@@ -2148,7 +2148,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 
 		local item_count = #items
 		item_cleanups = table.create(item_count)
-		
+
 
 		for order, item in items do
 			button(item, order).Parent = dropdown_scroll
@@ -2183,9 +2183,9 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		default_value = default_value,
 
 		Value = value,
-		
+
 		Multi = props.Multi or false,
-		
+
 		Open = dropdown_open,
 		Close = dropdown_close,
 		Toggle = dropdown_toggle,
@@ -2207,7 +2207,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		end
 	end
 	dropdown.Listen = dropdown_listen
-	
+
 	local text
 	if props.Multi then
 		text = source(table.concat(value:get() :: {string}, ", "))
@@ -2228,7 +2228,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		Size = UDim2.fromOffset(90, 19),
 		Text = text,
 		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = fontSizes.small,
+		TextSize = fontSizes.body,
 		TextWrapped = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextTransparency = section.content_transparency,
@@ -2568,7 +2568,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 	local default_value = props.DefaultValue
 	local callbacks: { (Color3) -> () } = if props.Callback then { props.Callback } else {}
 	local value = source(default_value)
-	
+
 	local color_picker = {
 		kind = "color_picker" :: "color_picker",
 
@@ -2583,7 +2583,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 
 		Value = value,
 	}
-	
+
 	local function fire_listeners(value: Color3)
 		for _, callback in callbacks do
 			task.spawn(callback, value)
@@ -2599,7 +2599,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		end
 	end
 	color_picker.Listen = color_picker_listen
-	
+
 	local function focus_lost(text_box: TextBox, property: "R" | "G" | "B"): RBXScriptConnection
 		local function reconstruct(value: number, current: Color3)
 			if property == "R" then
@@ -2624,7 +2624,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			end
 		end)
 	end
-	
+
 	local hex_box = create "TextBox" {
 		BackgroundColor3 = Color3.fromRGB(50, 50, 50),
 		BackgroundTransparency = 0.1,
@@ -2656,13 +2656,13 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			end
 		end
 	end)
-	
+
 	local box_r = create "TextBox" {
 		BackgroundColor3 = Color3.fromRGB(50, 50, 50),
 		BackgroundTransparency = 0.1,
 		FontFace = fonts.builder_sans.regular,
 		Position = UDim2.fromOffset(0, 140),
-		Size = UDim2.fromOffset(30, 20),
+		Size = UDim2.fromOffset(32, 20),
 		Text = "255",
 		TextColor3 = Color3.fromRGB(235, 235, 235),
 		TextSize = fontSizes.body,
@@ -2680,13 +2680,13 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		},
 	} :: TextBox
 	focus_lost(box_r, "R")
-	
+
 	local box_g = create "TextBox" {
 		BackgroundColor3 = Color3.fromRGB(50, 50, 50),
 		BackgroundTransparency = 0.1,
 		FontFace = fonts.builder_sans.regular,
-		Position = UDim2.fromOffset(34, 140),
-		Size = UDim2.fromOffset(30, 20),
+		Position = UDim2.fromOffset(36, 140),
+		Size = UDim2.fromOffset(32, 20),
 		Text = "255",
 		TextColor3 = Color3.fromRGB(235, 235, 235),
 		TextSize = fontSizes.body,
@@ -2704,13 +2704,13 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		},
 	} :: TextBox
 	focus_lost(box_g, "G")
-	
+
 	local box_b = create "TextBox" {
 		BackgroundColor3 = Color3.fromRGB(50, 50, 50),
 		BackgroundTransparency = 0.1,
 		FontFace = fonts.builder_sans.regular,
-		Position = UDim2.fromOffset(68, 140),
-		Size = UDim2.fromOffset(30, 20),
+		Position = UDim2.fromOffset(72, 140),
+		Size = UDim2.fromOffset(32, 20),
 		Text = "255",
 		TextColor3 = Color3.fromRGB(235, 235, 235),
 		TextSize = fontSizes.body,
@@ -2728,20 +2728,20 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		},
 	} :: TextBox
 	focus_lost(box_b, "B")
-	
+
 	local move_connection: RBXScriptConnection?
 	local color_container: CanvasGroup
 	local hue_container: ImageLabel
-	
+
 	local color_picker_position = source(UDim2.fromScale(0, 0))
 	local hue_picker_position = source(UDim2.fromScale(0, 0.5))
 	local gradient_color = source(ColorSequence.new(Color3.new()))
-	
+
 	local last_hue, last_sat = value:get():ToHSV()
-	
+
 	value:listen(function(color)
 		local h, s, v = color:ToHSV()
-		
+
 		-- preserve hue & sat
 		if v == 0 then
 			h = last_hue
@@ -2750,19 +2750,19 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			last_hue = h
 			last_sat = s
 		end
-		
+
 		color_picker_position:set(UDim2.fromScale(s, 1 - v))
 		hue_picker_position:set(UDim2.fromScale(h, 0.5))
 		gradient_color:set(ColorSequence.new(
 			Color3.new(1, 1, 1),
 			Color3.fromHSV(h, 1, 1)
-		))
+			))
 	end)
-	
+
 	color_container = create "CanvasGroup" {
 		BackgroundColor3 = Color3.new(1, 1, 1),
 		Size = UDim2.new(1, 0, 0, 90),
-		
+
 		InputBegan = function(input: InputObject)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				if move_connection then
@@ -2771,19 +2771,19 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 
 				move_connection = RunService.PreRender:Connect(function()
 					local mouse_location = UserInputService:GetMouseLocation() - Vector2.yAxis * GuiService.TopbarInset.Height
-					
+
 					-- relative position (scale)
 					local position = (mouse_location - color_container.AbsolutePosition) / color_container.AbsoluteSize
-					
+
 					--local old_h, old_s, old_v = value:get():ToHSV()
-					
+
 					--local h = value:get():ToHSV() -- keep old hue
 					local h = last_hue
 					local s = math.clamp(position.X, 0, 1)
 					local v = math.clamp(1 - position.Y, 0, 1)
-					
+
 					last_sat = s
-					
+
 					local color = Color3.fromHSV(h, s, v)
 					value:set(color)
 				end)
@@ -2795,7 +2795,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 				move_connection:Disconnect()
 			end
 		end,
-		
+
 		create "Frame" {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			BackgroundColor3 = Color3.new(),
@@ -2803,7 +2803,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			Position = color_picker_position,
 			Size = UDim2.fromOffset(5, 5),
 			ZIndex = 2,
-			
+
 			create "UIStroke" {
 				ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				Color = Color3.new(1, 1, 1),
@@ -2838,13 +2838,13 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			},
 		},
 	} :: CanvasGroup
-	
+
 	hue_container = create "Frame" {
 		AnchorPoint = Vector2.new(0.5, 0),
 		BackgroundColor3 = Color3.new(1, 1, 1),
 		Position = UDim2.new(0.5, 0, 0, 98),
 		Size = UDim2.new(1, 0, 0, 7),
-		
+
 		InputBegan = function(input: InputObject)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				if move_connection then
@@ -2856,15 +2856,15 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 
 					-- relative position (scale)
 					local position = (mouse_location - color_container.AbsolutePosition) / color_container.AbsoluteSize
-					
+
 					local hue = math.clamp(position.X, 0, 1)
 					last_hue = hue
-					
+
 					local color = Color3.fromHSV(
 						hue,
 						select(2, value:get():ToHSV()) -- keep sat & val the same
 					)
-					
+
 					value:set(color)
 				end)
 			end
@@ -2906,7 +2906,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			}),
 		},
 	} :: ImageLabel
-	
+
 	local picker_frame = create "Frame" {
 		Active = true,
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -2920,18 +2920,18 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		Size = UDim2.fromOffset(180, 165),
 		Visible = false,
 		theme_tag = "ContentContainer",
-		
+
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
 		},
-		
+
 		create "UIStroke" {
 			Color = Color3.fromRGB(15, 16, 17),
 		},
-		
+
 		color_container,
 		hue_container,
-		
+
 		create "UIPadding" {
 			PaddingBottom = UDim.new(0, 10),
 			PaddingLeft = UDim.new(0, 10),
@@ -2945,7 +2945,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		box_b,
 	} :: Frame
 	picker_frame.Parent = ensure_gui()
-	
+
 	local instance = create "Frame" {
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Color3.new(),
@@ -3033,7 +3033,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 				Selectable = true,
 				Size = UDim2.fromOffset(19, 19),
 				TextTransparency = 1,
-				
+
 				Activated = function()
 					local mouse_location = UserInputService:GetMouseLocation()
 					picker_frame.Position = UDim2.fromOffset(mouse_location.X - 50, mouse_location.Y)
@@ -3053,12 +3053,12 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 	} :: Frame
 	instance.Parent = section.container
 	color_picker.instance = instance
-	
+
 	local ClickInputs = {
 		Enum.UserInputType.MouseButton1,
 		Enum.UserInputType.Touch
 	};
-	
+
 	local con3 = UserInputService.InputEnded:Connect(function(input, _gpe)
 		if _gpe then return end
 
@@ -3073,11 +3073,11 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 
 
 	ELEMENT_FLAG(color_picker, section, props)
-	
+
 	local function to_value(rgb: number): number
 		return math.round(rgb * 255)
 	end
-	
+
 	value:listen(function(color)
 		color = Color3.new(
 			math.clamp(color.R, 0, 1),
@@ -3085,7 +3085,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			math.clamp(color.B, 0, 1)
 		)
 		fire_listeners(color)
-		
+
 		hex_box.Text = color:ToHex()
 		box_r.Text = tostring(to_value(color.R))
 		box_g.Text = tostring(to_value(color.G))
@@ -4931,6 +4931,10 @@ local function window_new(self: Library, props: WindowProps): Window
 
 			if not isfile(imageDir) then
 				local httpRequest = http_request or request
+				if not httpRequest then
+					return
+				end
+				
 				local response = httpRequest { Url = image, Method = "GET" }
 
 				if response and response.Body then 
