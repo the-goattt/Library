@@ -735,6 +735,21 @@ export type Button = {
 	instance: TextButton,
 }
 
+export type InfoBox = {
+	kind: "infobox",
+
+	Listen: (self: InfoBox, callback: () -> ()) -> () -> (),
+
+	window: Window,
+	tab: Tab,
+	section: Section,
+
+	title: string,
+	content: string,
+
+	instance: TextButton,
+}
+
 export type Input = {
 	kind: "input",
 
@@ -780,6 +795,16 @@ export type ToggleProps = {
 export type ButtonProps = {
 	Title: string,
 	Callback: (() -> ())?,
+
+	Flag: string?,
+	Order: number?,
+}
+
+export type InfoBoxProps = {
+	Title: string,
+	Content: string,
+	
+	SetContent: (self: InfoBox, content: { string }) -> (),
 
 	Flag: string?,
 	Order: number?,
@@ -946,7 +971,7 @@ export type DropdownProps<Value = string> = {
 
 export type MultiDropdownProps = DropdownProps<{string}> & { Multi: true }
 
-export type Element = Toggle | Divider | Slider | Keybind | RangeSlider | ColorPicker | Dropdown | Button | Input
+export type Element = Toggle | Divider | Slider | Keybind | RangeSlider | ColorPicker | Dropdown | Button | Input |InfoBox
 
 local DEFAULT_MINIMIZE_KEY = Enum.KeyCode.LeftAlt
 
@@ -986,7 +1011,7 @@ local DEFAULT_THEMES = {
 		},
 
 		Topbar = {
-			BackgroundColor3 = Color3.fromRGB(9, 10, 11),
+			BackgroundColor3 = Color3.fromRGB(17,18,19),
 			BackgroundTransparency = 0,
 		},
 		TopbarIcon = {
@@ -997,11 +1022,11 @@ local DEFAULT_THEMES = {
 		},
 
 		Sidebar = {
-			BackgroundColor3 = Color3.fromRGB(9, 10, 11),
+			BackgroundColor3 = Color3.fromRGB(17,18,19),
 			BackgroundTransparency = 0,
 		},
 		ContentContainer = {
-			BackgroundColor3 = Color3.fromRGB(9, 10, 11),
+			BackgroundColor3 = Color3.fromRGB(17,18,19),
 			BackgroundTransparency = 0,
 		},  
 
@@ -1013,11 +1038,11 @@ local DEFAULT_THEMES = {
 		},
 
 		Element = {
-			BackgroundColor3 = Color3.fromRGB(13, 14, 15),
+			BackgroundColor3 = Color3.fromRGB(22,23,24),
 			BackgroundTransparency = 0,
 		},
 		ElementStroke = {
-			Color = Color3.fromRGB(15, 16, 17),
+			Color = Color3.fromRGB(25, 26, 27),
 			Transparency = 0,
 		},
 
@@ -1065,16 +1090,16 @@ local DEFAULT_THEMES = {
 
 		Line = {
 			BackgroundTransparency = 0,
-			BackgroundColor3 = Color3.fromRGB(15, 16, 17),
+			BackgroundColor3 = Color3.fromRGB(25, 26, 27),
 		},
 
 		Tab = {
-			BackgroundColor3 = Color3.fromRGB(13, 14, 15),
+			BackgroundColor3 = Color3.fromRGB(22,23,24),
 			SelectedBackgroundTransparency = 0,
 			DeselectedBackgroundTransparency = 1,
 		},
 		TabStroke = {
-			Color = Color3.fromRGB(15, 16, 17),
+			Color = Color3.fromRGB(25, 26, 27),
 		},
 		TabIcon = {
 			SelectedImageColor3 = Color3.fromRGB(253, 158, 247),
@@ -2117,7 +2142,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 					end
 
 					value:set(new_value)
-					open:set(false)
+					--open:set(false)
 				end,
 
 				create "UIPadding" {
@@ -2272,7 +2297,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		},
 
 		create "TextLabel" {
-			Active = true,
+			Active = false,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			FontFace = fonts.builder_sans.regular,
@@ -2328,7 +2353,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 	dropdown.instance = instance
 
 	scroll_list_layout = create "UIListLayout" {
-		Padding = UDim.new(0, 1),
+		Padding = UDim.new(0, 3),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	} :: UIListLayout
 
@@ -2391,7 +2416,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 	local scroll_container = create "Frame" {
 		Active = true,
 		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundColor3 = Color3.fromRGB(13, 14, 15),
+		BackgroundColor3 = Color3.fromRGB(19, 20, 21),
 		ClipsDescendants = true,
 		Position = UDim2.fromOffset(0, 0),
 		Selectable = true,
@@ -2537,7 +2562,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		if not table.find(ClickInputs, input.UserInputType) then
 			return;
 		end
-
+		
 		if dropdown.IsOpen then
 			dropdown:Close()
 		end
@@ -2956,7 +2981,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		theme_tag = "Element",
 
 		create "TextLabel" {
-			Active = true,
+			Active = false,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			FontFace = fonts.builder_sans.regular,
@@ -3065,12 +3090,11 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		if not table.find(ClickInputs, input.UserInputType) then
 			return;
 		end
-
+		
 		if picker_frame.Visible then
 			picker_frame.Visible = false
 		end
 	end)
-
 
 	ELEMENT_FLAG(color_picker, section, props)
 
@@ -3389,7 +3413,7 @@ local function range_slider_new(section: Section, props: RangeSliderProps): Rang
 		theme_tag = "Element",
 
 		create "TextLabel" {
-			Active = true,
+			Active = false,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			FontFace = fonts.builder_sans.regular,
@@ -3586,7 +3610,7 @@ local function keybind_new(section: Section, props: KeybindProps): Keybind
 		theme_tag = "Element",
 
 		create "TextLabel" {
-			Active = true,
+			Active = false,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			FontFace = fonts.builder_sans.regular,
@@ -3894,7 +3918,7 @@ local function slider_new(section: Section, props: SliderProps): Slider
 		},
 
 		create "TextLabel" {
-			Active = true,
+			Active = false,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			FontFace = fonts.builder_sans.regular,
@@ -4197,7 +4221,7 @@ local function toggle_new(section: Section, props: ToggleProps): Toggle
 		},
 
 		create "TextLabel" {
-			Active = true,
+			Active = false,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			FontFace = fonts.builder_sans.regular,
@@ -4342,7 +4366,7 @@ local function button_new(section: Section, props: ButtonProps): Button
 		},
 
 		create "TextLabel" {
-			Active = true,
+			Active = false,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			FontFace = fonts.builder_sans.regular,
@@ -4380,6 +4404,125 @@ local function button_new(section: Section, props: ButtonProps): Button
 
 	active_window = nil
 	return button
+end
+
+local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
+	local order = NEXT_ORDER(section, props)
+
+	local tab = section.tab
+	local window = tab.window
+	active_window = window
+
+	local title = props.Title
+	local content = source(props.Content)
+	
+	local infobox = {
+		kind = "infobox" :: "infobox",
+
+		window = window,
+		tab = tab,
+		section = section,
+		
+		SetContent = function(_, newContent)
+			content:set(newContent)
+		end,
+
+		title = title,
+		content = content,
+	}
+	
+	local gradient_offset = motion(Vector2.new(-0.12, 0))
+
+	local instance = create "Frame" {
+		Name = "title",
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = Color3.fromRGB(22, 23, 24),
+		LayoutOrder = order,
+		Selectable = true,
+		Size = UDim2.fromScale(1, 0),
+		theme_tag = "Element",
+		
+		MouseEnter = function()
+			gradient_offset:spring(Vector2.new(0, 0), springs.soft)
+		end,
+		
+		MouseLeave = function()
+			gradient_offset:spring(Vector2.new(-0.12, 0), springs.soft)
+		end,
+		
+		create "UICorner" {
+			Name = "UICorner",
+			CornerRadius = UDim.new(0, 6),
+		},
+
+		create "UIPadding" {
+			Name = "UIPadding",
+			PaddingBottom = UDim.new(0, 8),
+			PaddingLeft = UDim.new(0, 10),
+			PaddingRight = UDim.new(0, 6),
+			PaddingTop = UDim.new(0, 8),
+		},
+
+		create "TextLabel" {
+			Name = "Title",
+			Active = false,
+			AutomaticSize = Enum.AutomaticSize.Y,
+			BackgroundTransparency = 1,
+			FontFace = fonts.builder_sans.semibold,
+			Selectable = true,
+			Size = UDim2.fromScale(1, 0),
+			Text = title,
+			TextColor3 = Color3.fromRGB(253, 158, 247),
+			TextSize = fontSizes.subtitle,
+			TextWrapped = true,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			theme_tag = "TopbarTitle",
+		},
+
+		create "UIStroke" {
+			Name = "UIStroke",
+			Color = Color3.new(1, 1, 1),
+
+			create "UIGradient" {
+				Name = "UIGradient",
+				Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, get_themed_property(window, "TopbarTitle", "TextColor3")),
+					ColorSequenceKeypoint.new(0.12, get_themed_property(window, "ElementStroke", "Color")),
+					ColorSequenceKeypoint.new(1, get_themed_property(window, "ElementStroke", "Color")),
+				}),
+				Offset = gradient_offset,
+			},
+		},
+
+		create "UIListLayout" {
+			Name = "UIListLayout",
+			Padding = UDim.new(0, 2),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+		},
+
+		create "TextLabel" {
+			Name = "Content",
+			Active = false,
+			AutomaticSize = Enum.AutomaticSize.XY,
+			BackgroundTransparency = 1,
+			FontFace = fonts.builder_sans.regular,
+			Selectable = true,
+			Text = content,
+			TextColor3 = Color3.fromRGB(235, 235, 235),
+			TextSize = fontSizes.body, --test
+			TextWrapped = true,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			theme_tag = "Primary", 
+		},
+	} :: Frame
+	instance.Parent = section.container
+	infobox.instance = instance
+
+	table.insert(section.elements, infobox)
+	ELEMENT_FLAG(infobox, section, props)
+
+	active_window = nil
+	return infobox
 end
 
 local function input_new(section: Section, props: InputProps): Input
@@ -4464,7 +4607,7 @@ local function input_new(section: Section, props: InputProps): Input
 
 	local instance = create "Frame" {
 		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundColor3 = Color3.fromRGB(13, 14, 15),
+		BackgroundColor3 = Color3.fromRGB(19, 20, 21),
 		BackgroundTransparency = section.element_bg_transparency,
 		LayoutOrder = order,
 		Selectable = true,
@@ -4484,7 +4627,7 @@ local function input_new(section: Section, props: InputProps): Input
 		},
 
 		create "TextLabel" {
-			Active = true,
+			Active = false,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
 			TextTransparency = section.content_transparency,
@@ -4560,6 +4703,7 @@ local function section_new(tab: Tab, props: SectionProps): Section
 	local section = {
 		Input = input_new,
 		Button = button_new,
+		InfoBox = info_box_new,
 		Toggle = toggle_new,
 		Divider = divider_new,
 		Slider = slider_new,
@@ -4615,7 +4759,7 @@ local function section_new(tab: Tab, props: SectionProps): Section
 	local container = create "Frame" {
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(0, 20),
+		Position = UDim2.fromOffset(0, 16),
 		Size = UDim2.fromScale(1, 0),
 		-- Visible = container_visible,
 
@@ -4643,27 +4787,20 @@ local function section_new(tab: Tab, props: SectionProps): Section
 			create "Frame" {
 				BackgroundTransparency = 1,
 				LayoutOrder = -1,
-				Size = UDim2.new(1, 0, 0, 15),
+				Size = UDim2.new(1, 0, 0, 11),
 
 				create "TextLabel" {
 					BackgroundTransparency = 1,
-					FontFace = fonts.builder_sans.medium,
+					FontFace = fonts.builder_sans.bold,
 					TextXAlignment = Enum.TextXAlignment.Left,
 					LayoutOrder = 1,
 					Size = UDim2.fromScale(1, 1),
-					Text = title,
+					Text = string.upper(title),
 					TextTransparency = content_transparency,
 					TextColor3 = Color3.fromRGB(235, 235, 235),
 					TextScaled = false,
-					TextSize = fontSizes.title,
+					TextSize = fontSizes.small,
 					theme_tag = "Primary",
-				},
-
-				create "UIListLayout" {
-					FillDirection = Enum.FillDirection.Horizontal,
-					Padding = UDim.new(0, 8),
-					SortOrder = Enum.SortOrder.LayoutOrder,
-					VerticalAlignment = Enum.VerticalAlignment.Center,
 				},
 			},
 		},
@@ -5671,7 +5808,7 @@ local function window_new(self: Library, props: WindowProps): Window
 					AnchorPoint = Vector2.new(1, 0.5),
 					AutoButtonColor = false,
 					BackgroundTransparency = clamped_close_transparency,
-					BackgroundColor3 = Color3.fromRGB(13, 14, 15),
+					BackgroundColor3 = Color3.fromRGB(19, 20, 21),
 					Position = UDim2.new(1, -8, 0.5, 0),
 					Size = UDim2.fromOffset(20, 20),
 					Text = "",
