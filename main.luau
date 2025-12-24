@@ -1042,7 +1042,7 @@ local DEFAULT_THEMES = {
 			BackgroundTransparency = 0,
 		},
 		ElementStroke = {
-			Color = Color3.fromRGB(25, 26, 27),
+			Color = Color3.fromRGB(28, 29, 30), --25, 26, 27
 			Transparency = 0,
 		},
 
@@ -1090,7 +1090,7 @@ local DEFAULT_THEMES = {
 
 		Line = {
 			BackgroundTransparency = 0,
-			BackgroundColor3 = Color3.fromRGB(25, 26, 27),
+			BackgroundColor3 = Color3.fromRGB(28, 29, 30),
 		},
 
 		Tab = {
@@ -2758,7 +2758,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 	local color_container: CanvasGroup
 	local hue_container: ImageLabel
 
-	local color_picker_position = source(UDim2.fromScale(0, 0))
+	local color_picker_position = motion(UDim2.fromScale(0, 0))
 	local hue_picker_position = source(UDim2.fromScale(0, 0.5))
 	local gradient_color = source(ColorSequence.new(Color3.new()))
 
@@ -2776,7 +2776,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 			last_sat = s
 		end
 
-		color_picker_position:set(UDim2.fromScale(s, 1 - v))
+		color_picker_position:spring(UDim2.fromScale(s, 1 - v), springs.fast_soft)
 		hue_picker_position:set(UDim2.fromScale(h, 0.5))
 		gradient_color:set(ColorSequence.new(
 			Color3.new(1, 1, 1),
@@ -2934,7 +2934,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 
 	local picker_frame = create "Frame" {
 		Active = true,
-		AnchorPoint = Vector2.new(1, 0.5),
+		AnchorPoint = Vector2.new(0, 0.5),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Color3.fromRGB(9, 10, 11),
 		ClipsDescendants = true,
@@ -2944,7 +2944,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		SelectionGroup = true,
 		Size = UDim2.fromOffset(180, 165),
 		Visible = false,
-		theme_tag = "ContentContainer",
+		theme_tag = "Element",
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
@@ -2952,6 +2952,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 
 		create "UIStroke" {
 			Color = Color3.fromRGB(15, 16, 17),
+			theme_tag = "ElementStroke",
 		},
 
 		color_container,
@@ -3050,28 +3051,22 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 				Active = true,
 				AutoButtonColor = false,
 				AnchorPoint = Vector2.new(1, 0.5),
-				AutomaticSize = Enum.AutomaticSize.X,
 				BackgroundColor3 = value,
 				BackgroundTransparency = section.content_transparency,
 				LayoutOrder = 3,
-				Position = UDim2.new(1, -116, 0.5, 0),
+				Position = UDim2.new(1, 0, 0.5, 0),
 				Selectable = true,
-				Size = UDim2.fromOffset(19, 19),
+				Size = UDim2.fromOffset(38, 19),
 				TextTransparency = 1,
 
 				Activated = function()
 					local mouse_location = UserInputService:GetMouseLocation()
-					picker_frame.Position = UDim2.fromOffset(mouse_location.X - 50, mouse_location.Y)
+					picker_frame.Position = UDim2.fromOffset(mouse_location.X + 40, mouse_location.Y)
 					picker_frame.Visible = not picker_frame.Visible
 				end,
 
 				create "UICorner" {
 					CornerRadius = UDim.new(0, 4),
-				},
-
-				create "UIPadding" {
-					PaddingLeft = UDim.new(0, 7),
-					PaddingRight = UDim.new(0, 7),
 				},
 			},
 		},
@@ -4434,7 +4429,6 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 	local gradient_offset = motion(Vector2.new(-0.12, 0))
 
 	local instance = create "Frame" {
-		Name = "title",
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Color3.fromRGB(22, 23, 24),
 		LayoutOrder = order,
@@ -4451,12 +4445,10 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 		end,
 		
 		create "UICorner" {
-			Name = "UICorner",
 			CornerRadius = UDim.new(0, 6),
 		},
 
 		create "UIPadding" {
-			Name = "UIPadding",
 			PaddingBottom = UDim.new(0, 8),
 			PaddingLeft = UDim.new(0, 10),
 			PaddingRight = UDim.new(0, 6),
@@ -4464,7 +4456,6 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 		},
 
 		create "TextLabel" {
-			Name = "Title",
 			Active = false,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundTransparency = 1,
@@ -4480,11 +4471,9 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 		},
 
 		create "UIStroke" {
-			Name = "UIStroke",
 			Color = Color3.new(1, 1, 1),
 
 			create "UIGradient" {
-				Name = "UIGradient",
 				Color = ColorSequence.new({
 					ColorSequenceKeypoint.new(0, get_themed_property(window, "TopbarTitle", "TextColor3")),
 					ColorSequenceKeypoint.new(0.12, get_themed_property(window, "ElementStroke", "Color")),
@@ -4495,13 +4484,11 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 		},
 
 		create "UIListLayout" {
-			Name = "UIListLayout",
 			Padding = UDim.new(0, 2),
 			SortOrder = Enum.SortOrder.LayoutOrder,
 		},
 
 		create "TextLabel" {
-			Name = "Content",
 			Active = false,
 			AutomaticSize = Enum.AutomaticSize.XY,
 			BackgroundTransparency = 1,
@@ -4800,7 +4787,7 @@ local function section_new(tab: Tab, props: SectionProps): Section
 					TextColor3 = Color3.fromRGB(235, 235, 235),
 					TextScaled = false,
 					TextSize = fontSizes.small,
-					theme_tag = "Primary",
+					theme_tag = "Secondary",
 				},
 			},
 		},
@@ -5387,6 +5374,97 @@ local function window_new(self: Library, props: WindowProps): Window
 	table.insert(cleanups, function()
 		minimize_connection:Disconnect()
 	end)
+	
+	
+	-- MOBILE TOGGLE
+	local mobile_toggle: ImageLabel
+	
+	do 
+		local mobile_toggle_position = motion(UDim2.new(0.5, -26, 0, 20))
+		
+		local drag_connection: RBXScriptConnection?
+		local function stop_drag()
+			if drag_connection then
+				drag_connection:Disconnect()
+				drag_connection = nil
+			end
+		end
+		
+		local function start_drag()
+			stop_drag()
+
+			local container_pos = mobile_toggle.AbsolutePosition --+ mobile_toggle.AbsoluteSize / 2
+			local drag_offset = UserInputService:GetMouseLocation() - container_pos - Vector2.new(0, GuiService.TopbarInset.Height)
+			drag_connection = RunService.PreRender:Connect(function()
+				local mouse_location = UserInputService:GetMouseLocation()
+
+				-- apply drag offset to ensure that if the user is like
+				-- dragging the topbar that the topbar will drag with their cursor
+				local new_position = UDim2.fromOffset(mouse_location.X - drag_offset.X, mouse_location.Y - drag_offset.Y)
+				mobile_toggle_position:spring(new_position, springs.fast_soft)
+			end)
+		end
+		
+		mobile_toggle = create "ImageLabel" {
+			BackgroundTransparency = 1,
+			ClipsDescendants = true,
+			Image = "rbxassetid://87218987217949",
+			ImageColor3 = Color3.fromRGB(10, 10, 10),
+			ImageTransparency = 0.7,
+			Position = mobile_toggle_position,
+			ScaleType = Enum.ScaleType.Slice,
+			Size = UDim2.fromOffset(52, 52),
+			SliceCenter = Rect.new(47, 47, 172, 179),
+			ZIndex = 0,
+			theme_tag = "WindowShadow",                         
+			
+			create "TextButton" {
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				AutoButtonColor = false,
+				BackgroundColor3 = Color3.fromRGB(9, 10, 11),
+				Position = UDim2.fromScale(0.5, 0.5),
+				Size = UDim2.fromOffset(40, 40),
+				SizeConstraint = Enum.SizeConstraint.RelativeYY,
+				Text = "",
+				theme_tag = "ContentContainer",
+				
+				InputBegan = function(input: InputObject)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						start_drag()
+					end
+				end,
+
+				InputEnded = function(input: InputObject)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						stop_drag()
+					end
+				end,
+				
+				MouseButton1Click = function()
+					window_toggle_minimized(window :: Window)
+				end,
+
+				create "UICorner" {
+					CornerRadius = UDim.new(0, 10),
+				},
+
+				create "ImageLabel" {
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					BackgroundTransparency = 1,
+					Image = ENSURE_IMAGE(ICON),
+					Position = UDim2.fromScale(0.5, 0.5),
+					ScaleType = Enum.ScaleType.Fit,
+					Size = UDim2.fromScale(0.55, 0.55),
+				},
+
+				create "UIStroke" {
+					Color = Color3.new(1, 1, 1),
+					Transparency = 0.95,
+					theme_tag = "WindowStroke",
+				},
+			},
+		} :: ImageLabel
+	end
 
 	local content_container = create "Frame" {
 		AnchorPoint = Vector2.new(1, 0),
@@ -5607,14 +5685,12 @@ local function window_new(self: Library, props: WindowProps): Window
 		ZIndex = 0,
 
 		create "UIListLayout" {
-			Name = "UIListLayout",
 			HorizontalAlignment = Enum.HorizontalAlignment.Center,
 			SortOrder = Enum.SortOrder.LayoutOrder,
 			VerticalAlignment = Enum.VerticalAlignment.Center,
 		},
 
 		create "ImageLabel" {
-			Name = "ImageLabel",
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			BackgroundTransparency = 1,
 			Image = ENSURE_IMAGE(ICON_BLUR),
@@ -5625,7 +5701,6 @@ local function window_new(self: Library, props: WindowProps): Window
 			SizeConstraint = Enum.SizeConstraint.RelativeYY,
 
 			create "ImageLabel" {
-				Name = "ImageLabel",
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				BackgroundTransparency = 1,
 				Image = ENSURE_IMAGE(ICON),
@@ -5815,7 +5890,6 @@ local function window_new(self: Library, props: WindowProps): Window
 					theme_tag = "Tab",
 
 					create "UICorner" {
-						Name = "UICorner",
 						CornerRadius = UDim.new(0, 5),
 					},
 
@@ -5941,6 +6015,7 @@ local function window_new(self: Library, props: WindowProps): Window
 
 	task.wait(0.4)
 	loading:Destroy()
+	mobile_toggle.Parent = GLOBAL_GUI
 
 	return window
 end
