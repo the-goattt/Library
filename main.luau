@@ -6015,7 +6015,10 @@ local function window_new(self: Library, props: WindowProps): Window
 
 	task.wait(0.4)
 	loading:Destroy()
-	mobile_toggle.Parent = GLOBAL_GUI
+	
+	if UserInputService.TouchEnabled then
+		mobile_toggle.Parent = GLOBAL_GUI
+	end
 
 	return window
 end
