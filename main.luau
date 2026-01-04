@@ -5455,7 +5455,7 @@ local function window_new(self: Library, props: WindowProps): Window
 				create "ImageLabel" {
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					BackgroundTransparency = 1,
-					Image = ENSURE_IMAGE(ICON),
+					Image = ENSURE_IMAGE(ICON, "icon"),
 					Position = UDim2.fromScale(0.5, 0.5),
 					ScaleType = Enum.ScaleType.Fit,
 					Size = UDim2.fromScale(0.55, 0.55),
@@ -5697,7 +5697,7 @@ local function window_new(self: Library, props: WindowProps): Window
 		create "ImageLabel" {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			BackgroundTransparency = 1,
-			Image = ENSURE_IMAGE(ICON_BLUR),
+			Image = ENSURE_IMAGE(ICON_BLUR, "icon_blur"),
 			ImageColor3 = Color3.fromRGB(254, 160, 248),
 			ImageTransparency = 0.7,
 			ScaleType = Enum.ScaleType.Fit,
@@ -5707,7 +5707,7 @@ local function window_new(self: Library, props: WindowProps): Window
 			create "ImageLabel" {
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				BackgroundTransparency = 1,
-				Image = ENSURE_IMAGE(ICON),
+				Image = ENSURE_IMAGE(ICON, "icon"),
 				Position = UDim2.fromScale(0.5, 0.5),
 				ScaleType = Enum.ScaleType.Fit,
 				Size = UDim2.fromOffset(60, 60),
@@ -5978,7 +5978,7 @@ local function window_new(self: Library, props: WindowProps): Window
 				create "ImageLabel" {
 					AnchorPoint = Vector2.new(0, 0.5),
 					BackgroundTransparency = 1,
-					Image = ENSURE_IMAGE(ICON), -- real topbar icon
+					Image = ENSURE_IMAGE(ICON, "icon"), -- real topbar icon
 					Position = UDim2.new(0, 12, 0.5, 0),
 					Size = UDim2.fromOffset(16, 16),
 					ScaleType = Enum.ScaleType.Fit
