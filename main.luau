@@ -4431,6 +4431,7 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 	local instance = create "Frame" {
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Color3.fromRGB(22, 23, 24),
+		BackgroundTransparency = section.element_bg_transparency,
 		LayoutOrder = order,
 		Selectable = true,
 		Size = UDim2.fromScale(1, 0),
@@ -4468,11 +4469,13 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			theme_tag = "TopbarTitle",
+			TextTransparency = section.content_transparency,
 		},
 
 		create "UIStroke" {
 			Color = Color3.new(1, 1, 1),
-
+			Transparency = section.element_stroke_transparency,
+			
 			create "UIGradient" {
 				Color = ColorSequence.new({
 					ColorSequenceKeypoint.new(0, get_themed_property(window, "TopbarTitle", "TextColor3")),
@@ -4500,6 +4503,7 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			theme_tag = "Primary", 
+			TextTransparency = section.content_transparency,
 		},
 	} :: Frame
 	instance.Parent = section.container
