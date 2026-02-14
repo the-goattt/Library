@@ -1,6 +1,7 @@
 --!strict
 
 local cloneref = cloneref or function(instance) return instance end;
+local httpRequest = http_request or request
 
 local HttpService = cloneref(game:GetService("HttpService"))
 local Players = cloneref(game:GetService("Players"))
@@ -992,7 +993,6 @@ local function AWAKEN_MOTION()
 	end)
 end
 
-local ICON, ICON_BLUR = 'https://raw.githubusercontent.com/LovelySoftworksLLC/Lovely/refs/heads/main/SLR2/lovely_icon.png', "https://raw.githubusercontent.com/LovelySoftworksLLC/Lovely/refs/heads/main/SLR2/lovely_icon_blurred.png"
 local DEFAULT_THEMES = {
 	Dark = {
 		-- TEXT COLORS
@@ -1820,7 +1820,7 @@ local function ensure_gui(): ScreenGui
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 	if gethui then
-		gui.Parent = cloneref(game:GetService("CoreGui"))--gethui()
+		gui.Parent = gethui()
 	else
 		if RunService:IsStudio() then
 			gui.Parent = Players.LocalPlayer.PlayerGui
@@ -3265,7 +3265,7 @@ local function range_slider_new(section: Section, props: RangeSliderProps): Rang
 		AnchorPoint = Vector2.new(0, 0.5),
 		AutoButtonColor = false,
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://130553358180286",
+		Image = ENSURE_IMAGE("circle"),
 		ImageColor3 = Color3.fromRGB(253, 158, 247),
 		ImageTransparency = section.content_transparency,
 		Position = UDim2.fromScale(0, 0.5),
@@ -3282,7 +3282,7 @@ local function range_slider_new(section: Section, props: RangeSliderProps): Rang
 		AnchorPoint = Vector2.new(1, 0.5),
 		AutoButtonColor = false,
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://130553358180286",
+		Image = ENSURE_IMAGE("circle"),
 		ImageColor3 = Color3.fromRGB(253, 158, 247),
 		ImageTransparency = section.content_transparency,
 		Position = UDim2.fromScale(1, 0.5),
@@ -3809,7 +3809,7 @@ local function slider_new(section: Section, props: SliderProps): Slider
 				AutoButtonColor = false,
 				BackgroundTransparency = 1,
 				Interactable = false,
-				Image = "rbxassetid://130553358180286",
+				Image = ENSURE_IMAGE("circle"),
 				ImageTransparency = section.content_transparency,
 				ImageColor3 = Color3.fromRGB(253, 158, 247),
 				Position = UDim2.fromScale(1, 0.5),
@@ -4173,7 +4173,7 @@ local function toggle_new(section: Section, props: ToggleProps): Toggle
 					AnchorPoint = toggle_anchor_point,
 					AutoButtonColor = false,
 					BackgroundTransparency = 1,
-					Image = "rbxassetid://130553358180286",
+					Image = ENSURE_IMAGE("circle"),
 					Interactable = false,
 					ImageColor3 = accent_toggle_thumb,
 					Position = toggle_position,
@@ -4910,7 +4910,7 @@ local function tab_new(window: Window, props: TabProps): Tab
 		create "ImageLabel" {
 			AnchorPoint = Vector2.new(0, 0.5),
 			BackgroundTransparency = 1,
-			Image = ENSURE_IMAGE(icon),
+			Image = ENSURE_IMAGE('lovely_icon'),
 			ImageColor3 = image_color,
 			Position = UDim2.new(0, 8, 0.5, 0),
 			ScaleType = Enum.ScaleType.Fit,
@@ -5043,34 +5043,34 @@ local function window_new(self: Library, props: WindowProps): Window
 
 	local dir = props.Folder or props.Title
 	local config_directory = `{dir}/configs`
+	local image_directory = `{dir}/icons`
+
 	local function ensure_folder(path: string)
 		if not isfolder(path) then
 			makefolder(path)
 		end
 	end
 
-	ENSURE_IMAGE = function(image: string, name: string?): string
-		ensure_folder(dir)
-		if string.find(image, "http") then
-			local imageDir = if name then `{dir}/{name}.png` else `{dir}/lovely.png`
+	ENSURE_IMAGE = function(name: string): string
+		ensure_folder(image_directory)
 
-			if not isfile(imageDir) then
-				local httpRequest = http_request or request
-				if not httpRequest then
-					return
-				end
-				
-				local response = httpRequest { Url = image, Method = "GET" }
-
-				if response and response.Body then 
-					writefile(imageDir, response.Body)
-				end 
-			end
-
-			return getcustomasset and getcustomasset(imageDir)
-		else
-			return image
+		if not httpRequest or not name then
+			return
 		end
+		
+		local url = string.format('https://raw.githubusercontent.com/LovelySoftworksLLC/Lovely/refs/heads/main/SLR2/Icons/%s.png', name);
+
+		local imageDir = `{image_directory}/{name}.png`
+
+		if not isfile(imageDir) then			
+			local response = httpRequest { Url = url, Method = "GET" }
+
+			if response and response.Body then 
+				writefile(imageDir, response.Body)
+			end 
+		end
+
+		return getcustomasset and getcustomasset(imageDir)
 	end
 
 	export type Settings = {
@@ -5409,7 +5409,7 @@ local function window_new(self: Library, props: WindowProps): Window
 		mobile_toggle = create "ImageLabel" {
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
-			Image = "rbxassetid://87218987217949",
+			Image = ENSURE_IMAGE("shadow"), --
 			ImageColor3 = Color3.fromRGB(10, 10, 10),
 			ImageTransparency = 0.7,
 			Position = mobile_toggle_position,
@@ -5452,7 +5452,7 @@ local function window_new(self: Library, props: WindowProps): Window
 				create "ImageLabel" {
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					BackgroundTransparency = 1,
-					Image = ENSURE_IMAGE(ICON, "icon"),
+					Image = ENSURE_IMAGE('lovely_icon'),
 					Position = UDim2.fromScale(0.5, 0.5),
 					ScaleType = Enum.ScaleType.Fit,
 					Size = UDim2.fromScale(0.55, 0.55),
@@ -5694,7 +5694,7 @@ local function window_new(self: Library, props: WindowProps): Window
 		create "ImageLabel" {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			BackgroundTransparency = 1,
-			Image = ENSURE_IMAGE(ICON_BLUR, "icon_blur"),
+			Image = ENSURE_IMAGE('lovely_icon_blurred'),
 			ImageColor3 = Color3.fromRGB(254, 160, 248),
 			ImageTransparency = 0.7,
 			ScaleType = Enum.ScaleType.Fit,
@@ -5704,7 +5704,7 @@ local function window_new(self: Library, props: WindowProps): Window
 			create "ImageLabel" {
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				BackgroundTransparency = 1,
-				Image = ENSURE_IMAGE(ICON, "icon"),
+				Image = ENSURE_IMAGE('lovely_icon'),
 				Position = UDim2.fromScale(0.5, 0.5),
 				ScaleType = Enum.ScaleType.Fit,
 				Size = UDim2.fromOffset(60, 60),
@@ -5761,7 +5761,7 @@ local function window_new(self: Library, props: WindowProps): Window
 
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://87218987217949",
+		Image = ENSURE_IMAGE("shadow"),
 		ImageColor3 = Color3.new(),
 		ImageTransparency = container_transparency,
 		Position = position,
@@ -5897,7 +5897,7 @@ local function window_new(self: Library, props: WindowProps): Window
 					create "ImageLabel" {
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						BackgroundTransparency = 1,
-						Image = "rbxassetid://10747384394",
+						Image = ENSURE_IMAGE("close"),
 						ImageColor3 = Color3.fromRGB(235, 235, 235),
 						Position = UDim2.fromScale(0.5, 0.5),
 						ScaleType = Enum.ScaleType.Fit,
@@ -5941,7 +5941,7 @@ local function window_new(self: Library, props: WindowProps): Window
 					create "ImageLabel" {
 						AnchorPoint = Vector2.new(0.5, 0.5),
 						BackgroundTransparency = 1,
-						Image = "rbxassetid://10734896206",
+						Image = ENSURE_IMAGE("minimize"),
 						ImageColor3 = Color3.fromRGB(235, 235, 235),
 						Position = UDim2.fromScale(0.5, 0.5),
 						ScaleType = Enum.ScaleType.Fit,
@@ -5975,7 +5975,7 @@ local function window_new(self: Library, props: WindowProps): Window
 				create "ImageLabel" {
 					AnchorPoint = Vector2.new(0, 0.5),
 					BackgroundTransparency = 1,
-					Image = ENSURE_IMAGE(ICON, "icon"), -- real topbar icon
+					Image = ENSURE_IMAGE('lovely_icon'), -- real topbar icon
 					Position = UDim2.new(0, 12, 0.5, 0),
 					Size = UDim2.fromOffset(16, 16),
 					ScaleType = Enum.ScaleType.Fit
