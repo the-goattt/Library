@@ -1241,7 +1241,6 @@ local readfile = readfile :: (string) -> string?
 local isfile = isfile :: (string) -> boolean
 
 if RunService:IsStudio() then
-	print"isstudio"
 	local WORKSPACE = Instance.new("Folder")
 	WORKSPACE.Name = "workspace"
 	WORKSPACE.Parent = workspace
