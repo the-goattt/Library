@@ -1,10 +1,10 @@
 --!strict
 
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local GuiService = game:GetService("GuiService")
+local HttpService = cloneref(game:GetService("HttpService"))
+local Players = cloneref(game:GetService("Players"))
+local RunService = cloneref(game:GetService("RunService"))
+local UserInputService = cloneref(game:GetService("UserInputService"))
+local GuiService = cloneref(game:GetService("GuiService"))
 
 type Cleanup = () -> ()
 
@@ -160,7 +160,7 @@ local ripple do
 		if intermediates[type] then
 			return intermediates[type].to(value)
 		else
-			error(`Ripple received an unsupported value '{value}' of type '{type}'`)
+			--error(`Ripple received an unsupported value '{value}' of type '{type}'`)
 		end
 	end
 
@@ -168,7 +168,7 @@ local ripple do
 		if intermediates[type] then
 			return intermediates[type].from(value)
 		else
-			error(`Ripple received an unsupported value '{value}' of type '{type}'`)
+			--error(`Ripple received an unsupported value '{value}' of type '{type}'`)
 		end
 	end
 
@@ -250,8 +250,6 @@ local ripple do
 			end
 		end
 	end
-
-	local RunService = game:GetService("RunService")
 
 	local springSolver = spring
 
