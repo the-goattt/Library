@@ -1820,7 +1820,7 @@ local function ensure_gui(): ScreenGui
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 	if gethui then
-		gui.Parent = gethui()
+		gui.Parent = cloneref(game:GetService("CoreGui"))--gethui()
 	else
 		if RunService:IsStudio() then
 			gui.Parent = Players.LocalPlayer.PlayerGui
