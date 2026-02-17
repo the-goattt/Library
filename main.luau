@@ -4910,7 +4910,7 @@ local function tab_new(window: Window, props: TabProps): Tab
 		create "ImageLabel" {
 			AnchorPoint = Vector2.new(0, 0.5),
 			BackgroundTransparency = 1,
-			Image = ENSURE_IMAGE('lovely_icon'),
+			Image = ENSURE_IMAGE(tab.icon),
 			ImageColor3 = image_color,
 			Position = UDim2.new(0, 8, 0.5, 0),
 			ScaleType = Enum.ScaleType.Fit,
