@@ -630,7 +630,7 @@ export type Window = {
 
 	Flags: { [string]: Element },
 
-	window_position: UDim2, 
+	window_position: UDim2,
 
 	title: string,
 	config_folder: string,
@@ -757,6 +757,10 @@ export type Input = {
 	Listen: (self: Input, callback: (string) -> ()) -> () -> (),
 	Value: Source<string>,
 
+	AddSiblings: AddSiblingsFn,
+	Siblings: { SiblingElement },
+	sibling: boolean,
+
 	window: Window,
 	tab: Tab,
 	section: Section,
@@ -773,6 +777,10 @@ export type Toggle = {
 	Listen: (self: Toggle, callback: (Value: boolean) -> ()) -> () -> (),
 	Value: Source<boolean>,
 
+	AddSiblings: AddSiblingsFn,
+	Siblings: { SiblingElement },
+	sibling: boolean,
+
 	window: Window,
 	tab: Tab,
 	section: Section,
@@ -780,6 +788,9 @@ export type Toggle = {
 	title: string,
 	default_value: boolean,
 	callbacks: { (Value: boolean) -> () },
+
+	inner_toggle: Frame,
+	connection: RBXScriptConnection,
 
 	instance: TextButton,
 }
@@ -804,7 +815,7 @@ export type ButtonProps = {
 export type InfoBoxProps = {
 	Title: string,
 	Content: string,
-	
+
 	SetContent: (self: InfoBox, content: { string }) -> (),
 
 	Flag: string?,
@@ -840,6 +851,10 @@ export type Slider = {
 
 	Listen: (self: Slider, callback: (Value: number) -> ()) -> () -> (),
 	Value: Source<number>,
+
+	AddSiblings: AddSiblingsFn,
+	Siblings: { SiblingElement },
+	sibling: boolean,
 
 	window: Window,
 	tab: Tab,
@@ -892,6 +907,10 @@ export type RangeSlider = {
 	Listen: (self: RangeSlider, callback: (Range: vector) -> ()) -> () -> (),
 	Value: Source<vector>,
 
+	AddSiblings: AddSiblingsFn,
+	Siblings: { SiblingElement },
+	sibling: boolean,
+
 	window: Window,
 	tab: Tab,
 	section: Section,
@@ -920,6 +939,10 @@ export type ColorPicker = {
 	Listen: (self: ColorPicker, callback: (Color: Color3) -> ()) -> () -> (),
 	Value: Source<Color3>,
 
+	AddSiblings: AddSiblingsFn,
+	Siblings: { SiblingElement },
+	sibling: boolean,
+
 	window: Window,
 	tab: Tab,
 	section: Section,
@@ -941,6 +964,10 @@ export type Dropdown = {
 
 	Listen: (self: Dropdown, callback: (Selected: string) -> ()) -> () -> (),
 	Value: Source<string>,
+
+	AddSiblings: AddSiblingsFn,
+	Siblings: { SiblingElement },
+	sibling: boolean,
 
 	Open: (self: Dropdown) -> (),
 	Close: (self: Dropdown) -> (),
@@ -972,7 +999,10 @@ export type DropdownProps<Value = string> = {
 
 export type MultiDropdownProps = DropdownProps<{string}> & { Multi: true }
 
-export type Element = Toggle | Divider | Slider | Keybind | RangeSlider | ColorPicker | Dropdown | Button | Input |InfoBox
+export type Element = Toggle | Divider | Slider | Keybind | RangeSlider | ColorPicker | Dropdown | Button | Input | InfoBox
+export type SiblingElement = Toggle | Slider | RangeSlider | ColorPicker | Dropdown | Input
+
+export type AddSiblingsFn = <T>(self: T, ...SiblingElement) -> T
 
 local DEFAULT_MINIMIZE_KEY = Enum.KeyCode.LeftAlt
 
@@ -1028,7 +1058,7 @@ local DEFAULT_THEMES = {
 		ContentContainer = {
 			BackgroundColor3 = Color3.fromRGB(17,18,19),
 			BackgroundTransparency = 0,
-		},  
+		},
 
 		Box = {
 			BackgroundColor3 = Color3.fromRGB(50, 50, 50),
@@ -1142,7 +1172,7 @@ local DEFAULT_THEMES = {
 		ContentContainer = {
 			BackgroundColor3 = Color3.fromRGB(246, 241, 240),
 			BackgroundTransparency = 0,
-		},  
+		},
 
 		Box = {
 			BackgroundColor3 = Color3.fromRGB(230, 225, 224),
@@ -2192,6 +2222,9 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 	local dropdown = {
 		kind = "dropdown" :: "dropdown",
 
+		Siblings = {},
+		sibling = false,
+
 		window = window,
 		tab = tab,
 		section = section,
@@ -2229,6 +2262,36 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		end
 	end
 	dropdown.Listen = dropdown_listen
+
+	local _index = 1;
+	local function add_sibling<T>(self: Dropdown, child: T & SiblingElement): T
+		if (child.sibling) then --// already is a sibling
+			return;
+		end
+
+		table.insert(dropdown.Siblings, child);
+		local child_frame = cloneref(child.instance:FindFirstChildOfClass("Frame"));
+		local main_frame = cloneref(self.instance:FindFirstChildOfClass("Frame"));
+
+		child_frame.Parent = main_frame;
+
+		child_frame.LayoutOrder = _index*10;
+		_index += 1;
+
+		child.instance:Destroy();
+		child.instance = child_frame;
+		child.sibling = true;
+
+		return child;
+	end
+
+	local function register_siblings<T>(self: T, ...: SiblingElement): T
+		for _, element in {...} do
+			add_sibling(self, element)  -- your internal function
+		end
+		return self
+	end
+	dropdown.AddSiblings = register_siblings;
 
 	local text
 	if props.Multi then
@@ -2336,7 +2399,10 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 			button,
 
 			create "UIListLayout" {
+				FillDirection = Enum.FillDirection.Horizontal,
+				Padding = UDim.new(0, 8),
 				SortOrder = Enum.SortOrder.LayoutOrder,
+				VerticalAlignment = Enum.VerticalAlignment.Center,
 			},
 		},
 
@@ -2516,7 +2582,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 			dropdown_size:spring(dropdown_target_size, springs.fast_soft)
 			dropdown_transparency:spring(get_themed_property(window, "ContentContainer", "BackgroundTransparency"), springs.soft)
 			dropdown_stroke_transparency:spring(get_themed_property(window, "ElementStroke", "Transparency"), springs.soft)
-			search_box_transparency:spring(0, springs.fast_soft)	
+			search_box_transparency:spring(0, springs.fast_soft)
 			divider_transparency:spring(get_themed_property(window, "Line", "BackgroundTransparency"), springs.fast_soft)
 		else
 			-- if dropdown is closing, make sure they cant still add text to the search box
@@ -2559,7 +2625,7 @@ local function dropdown_new(section: Section, props: DropdownProps): Dropdown
 		if not table.find(ClickInputs, input.UserInputType) then
 			return;
 		end
-		
+
 		if dropdown.IsOpen then
 			dropdown:Close()
 		end
@@ -2594,6 +2660,9 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 	local color_picker = {
 		kind = "color_picker" :: "color_picker",
 
+		Siblings = {},
+		sibling = false,
+
 		window = window,
 		tab = tab,
 		section = section,
@@ -2621,6 +2690,41 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		end
 	end
 	color_picker.Listen = color_picker_listen
+
+	local _index = 1;
+	local function add_sibling<T>(self: ColorPicker, child: T & SiblingElement): T
+		if (child.sibling) then --// already is a sibling
+			return;
+		end
+
+		table.insert(color_picker.Siblings, child);
+		local child_frame = cloneref(child.instance:FindFirstChildOfClass("Frame"));
+		local main_frame = cloneref(self.instance:FindFirstChildOfClass("Frame"));
+
+		local connections = getconnections(self.instance.Activated)
+		for _, conn in connections do
+			conn:Disconnect();
+		end
+
+		child_frame.Parent = main_frame;
+
+		child_frame.LayoutOrder = _index*10;
+		_index += 1;
+
+		child.instance:Destroy();
+		child.instance = child_frame;
+		child.sibling = true;
+
+		return child;
+	end
+
+	local function register_siblings<T>(self: T, ...: SiblingElement): T
+		for _, element in {...} do
+			add_sibling(self, element)  -- your internal function
+		end
+		return self
+	end
+	color_picker.AddSiblings = register_siblings;
 
 	local function focus_lost(text_box: TextBox, property: "R" | "G" | "B"): RBXScriptConnection
 		local function reconstruct(value: number, current: Color3)
@@ -3082,7 +3186,7 @@ local function color_picker_new(section: Section, props: ColorPickerProps): Colo
 		if not table.find(ClickInputs, input.UserInputType) then
 			return;
 		end
-		
+
 		if picker_frame.Visible then
 			picker_frame.Visible = false
 		end
@@ -3140,6 +3244,9 @@ local function range_slider_new(section: Section, props: RangeSliderProps): Rang
 	local range_slider = {
 		kind = "range_slider" :: "range_slider",
 
+		Siblings = {},
+		sibling = false,
+
 		window = window,
 		tab = tab,
 		section = section,
@@ -3170,6 +3277,41 @@ local function range_slider_new(section: Section, props: RangeSliderProps): Rang
 		end
 	end
 	range_slider.Listen = range_slider_listen
+
+	local _index = 1;
+	local function add_sibling<T>(self: RangeSlider, child: T & SiblingElement): T
+		if (child.sibling) then --// already is a sibling
+			return;
+		end
+
+		table.insert(range_slider.Siblings, child);
+		local child_frame = cloneref(child.instance:FindFirstChildOfClass("Frame"));
+		local main_frame = cloneref(self.instance:FindFirstChildOfClass("Frame"));
+
+		local connections = getconnections(self.instance.Activated)
+		for _, conn in connections do
+			conn:Disconnect();
+		end
+
+		child_frame.Parent = main_frame;
+
+		child_frame.LayoutOrder = _index*10;
+		_index += 1;
+
+		child.instance:Destroy();
+		child.instance = child_frame;
+		child.sibling = true;
+
+		return child;
+	end
+
+	local function register_siblings<T>(self: T, ...: SiblingElement): T
+		for _, element in {...} do
+			add_sibling(self, element)  -- your internal function
+		end
+		return self
+	end
+	range_slider.AddSiblings = register_siblings;
 
 	local slider_size = motion(UDim2.fromOffset(0, 2))
 	local slider_position = motion(UDim2.fromOffset(0, 0))
@@ -3722,6 +3864,9 @@ local function slider_new(section: Section, props: SliderProps): Slider
 	local slider = {
 		kind = "slider" :: "slider",
 
+		Siblings = {},
+		sibling = false,
+
 		window = window,
 		tab = tab,
 		section = section,
@@ -3752,6 +3897,41 @@ local function slider_new(section: Section, props: SliderProps): Slider
 		end
 	end
 	slider.Listen = slider_listen
+
+	local _index = 1;
+	local function add_sibling<T>(self: Slider, child: T & SiblingElement): T
+		if (child.sibling) then --// already is a sibling
+			return;
+		end
+
+		table.insert(slider.Siblings, child);
+		local child_frame = cloneref(child.instance:FindFirstChildOfClass("Frame"));
+		local main_frame = cloneref(self.instance:FindFirstChildOfClass("Frame"));
+
+		local connections = getconnections(self.instance.Activated)
+		for _, conn in connections do
+			conn:Disconnect();
+		end
+
+		child_frame.Parent = main_frame;
+
+		child_frame.LayoutOrder = _index*10;
+		_index += 1;
+
+		child.instance:Destroy();
+		child.instance = child_frame;
+		child.sibling = true;
+
+		return child;
+	end
+
+	local function register_siblings<T>(self: T, ...: SiblingElement): T
+		for _, element in {...} do
+			add_sibling(self, element)  -- your internal function
+		end
+		return self
+	end
+	slider.AddSiblings = register_siblings;
 
 	local start_hold, stop_hold
 
@@ -4052,6 +4232,9 @@ local function toggle_new(section: Section, props: ToggleProps): Toggle
 	local toggle = {
 		kind = "toggle" :: "toggle",
 
+		Siblings = {},
+		sibling = false,
+
 		window = window,
 		tab = tab,
 		section = section,
@@ -4119,20 +4302,107 @@ local function toggle_new(section: Section, props: ToggleProps): Toggle
 		end
 	end)
 
-	local instance = create "TextButton" {
+	local _index = 1;
+	local function add_sibling<T>(self: Toggle, child: T & SiblingElement): T
+		if (child.sibling) then --// already is a sibling
+			return;
+		end
+
+		table.insert(toggle.Siblings, child);
+		local child_frame = if child.kind == "toggle" then child.inner_toggle else cloneref(child.instance:FindFirstChildOfClass("Frame"));
+		local main_frame = cloneref(self.instance);
+
+		self.inner_toggle.LayoutOrder = 100
+
+		child_frame.Parent = main_frame;
+		child_frame.LayoutOrder = _index*10;
+		_index += 1;
+
+		child.instance:Destroy();
+		child.instance = child_frame;
+		child.sibling = true;
+
+		return child;
+	end
+
+	local function register_siblings<T>(self: T, ...: SiblingElement): T
+		for _, element in {...} do
+			add_sibling(self, element)  -- your internal function
+		end
+		return self
+	end
+	toggle.AddSiblings = register_siblings;
+
+	toggle.inner_toggle = create "TextButton" {
+		Active = true,
+		AnchorPoint = Vector2.new(1, 0.5),
+		AutomaticSize = Enum.AutomaticSize.XY,
+		BackgroundTransparency = 1,
+		TextTransparency = 1,
+		AutoButtonColor = false,
+		LayoutOrder = 1,
+		Position = UDim2.fromScale(1, 0.5),
+		Selectable = true,
+		Size = UDim2.fromOffset(0, 19),
+
+		create "Frame" {
+			Active = true,
+			AnchorPoint = Vector2.new(1, 0.5),
+			BackgroundTransparency = 1,
+			Position = UDim2.fromScale(1, 0.5),
+			Selectable = true,
+			Size = UDim2.fromOffset(30, 15),
+
+			create "UICorner" {
+				CornerRadius = UDim.new(1, 0),
+			},
+
+			create "ImageButton" {
+				Active = false,
+				AnchorPoint = toggle_anchor_point,
+				AutoButtonColor = false,
+				BackgroundTransparency = 1,
+				Image = ENSURE_IMAGE("circle"),
+				Interactable = false,
+				ImageColor3 = accent_toggle_thumb,
+				Position = toggle_position,
+				ImageTransparency = section.content_transparency,
+				ScaleType = Enum.ScaleType.Fit,
+				Selectable = false,
+				Size = UDim2.fromScale(1, 1),
+				SizeConstraint = Enum.SizeConstraint.RelativeYY,
+				theme_tag = "ToggleThumb",
+			},
+
+			create "UIStroke" {
+				Color = accent_toggle_stroke,
+				Transparency = stroke_transparency,
+				theme_tag = "ToggleStroke",
+			},
+
+			create "UIPadding" {
+				PaddingBottom = UDim.new(0, 2),
+				PaddingLeft = UDim.new(0, 2),
+				PaddingRight = UDim.new(0, 2),
+				PaddingTop = UDim.new(0, 2),
+			},
+		},
+
+		create "UIListLayout" {
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			FillDirection = Enum.FillDirection.Horizontal,
+			Padding = UDim.new(0, 8),
+			VerticalAlignment = Enum.VerticalAlignment.Center,
+		},
+	}
+
+	local instance = create "Frame" {
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Color3.new(),
 		BackgroundTransparency = section.element_bg_transparency,
-		AutoButtonColor = false,
 		Size = UDim2.fromScale(1, 0),
 		LayoutOrder = order,
-		Text = "",
-		TextTransparency = 1,
 		theme_tag = "Element",
-
-		Activated = function()
-			value:set(not value:get())
-		end,
 
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
@@ -4146,64 +4416,7 @@ local function toggle_new(section: Section, props: ToggleProps): Toggle
 			PaddingTop = UDim.new(0, 6),
 		},
 
-		create "Frame" {
-			Active = true,
-			AnchorPoint = Vector2.new(1, 0.5),
-			AutomaticSize = Enum.AutomaticSize.XY,
-			BackgroundTransparency = 1,
-			LayoutOrder = 1,
-			Position = UDim2.fromScale(1, 0.5),
-			Selectable = true,
-			Size = UDim2.fromOffset(0, 19),
-
-			create "Frame" {
-				Active = true,
-				AnchorPoint = Vector2.new(1, 0.5),
-				BackgroundTransparency = 1,
-				Position = UDim2.fromScale(1, 0.5),
-				Selectable = true,
-				Size = UDim2.fromOffset(30, 15),
-
-				create "UICorner" {
-					CornerRadius = UDim.new(1, 0),
-				},
-
-				create "ImageButton" {
-					Active = false,
-					AnchorPoint = toggle_anchor_point,
-					AutoButtonColor = false,
-					BackgroundTransparency = 1,
-					Image = ENSURE_IMAGE("circle"),
-					Interactable = false,
-					ImageColor3 = accent_toggle_thumb,
-					Position = toggle_position,
-					ImageTransparency = section.content_transparency,
-					ScaleType = Enum.ScaleType.Fit,
-					Selectable = false,
-					Size = UDim2.fromScale(1, 1),
-					SizeConstraint = Enum.SizeConstraint.RelativeYY,
-					theme_tag = "ToggleThumb",
-				},
-
-				create "UIStroke" {
-					Color = accent_toggle_stroke,
-					Transparency = stroke_transparency,
-					theme_tag = "ToggleStroke",
-				},
-
-				create "UIPadding" {
-					PaddingBottom = UDim.new(0, 2),
-					PaddingLeft = UDim.new(0, 2),
-					PaddingRight = UDim.new(0, 2),
-					PaddingTop = UDim.new(0, 2),
-				},
-			},
-
-			create "UIListLayout" {
-				SortOrder = Enum.SortOrder.LayoutOrder,
-				VerticalAlignment = Enum.VerticalAlignment.Center,
-			},
-		},
+		toggle.inner_toggle,
 
 		create "UIListLayout" {
 			FillDirection = Enum.FillDirection.Horizontal,
@@ -4245,6 +4458,10 @@ local function toggle_new(section: Section, props: ToggleProps): Toggle
 	} :: TextButton
 	instance.Parent = section.container
 	toggle.instance = instance
+
+	toggle.inner_toggle.Activated:Connect(function()
+		value:set(not value:get())
+	end)
 
 	table.insert(section.elements, toggle)
 
@@ -4345,6 +4562,8 @@ local function button_new(section: Section, props: ButtonProps): Button
 			},
 
 			create "UIListLayout" {
+				FillDirection = Enum.FillDirection.Horizontal,
+				Padding = UDim.new(0, 8),
 				SortOrder = Enum.SortOrder.LayoutOrder,
 				VerticalAlignment = Enum.VerticalAlignment.Center,
 			},
@@ -4407,14 +4626,14 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 
 	local title = props.Title
 	local content = source(props.Content)
-	
+
 	local infobox = {
 		kind = "infobox" :: "infobox",
 
 		window = window,
 		tab = tab,
 		section = section,
-		
+
 		SetContent = function(_, newContent)
 			content:set(newContent)
 		end,
@@ -4422,7 +4641,7 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 		title = title,
 		content = content,
 	}
-	
+
 	local gradient_offset = motion(Vector2.new(-0.12, 0))
 
 	local instance = create "Frame" {
@@ -4433,15 +4652,15 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 		Selectable = true,
 		Size = UDim2.fromScale(1, 0),
 		theme_tag = "Element",
-		
+
 		MouseEnter = function()
 			gradient_offset:spring(Vector2.new(0, 0), springs.soft)
 		end,
-		
+
 		MouseLeave = function()
 			gradient_offset:spring(Vector2.new(-0.12, 0), springs.soft)
 		end,
-		
+
 		create "UICorner" {
 			CornerRadius = UDim.new(0, 6),
 		},
@@ -4472,7 +4691,7 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 		create "UIStroke" {
 			Color = Color3.new(1, 1, 1),
 			Transparency = section.element_stroke_transparency,
-			
+
 			create "UIGradient" {
 				Color = ColorSequence.new({
 					ColorSequenceKeypoint.new(0, get_themed_property(window, "TopbarTitle", "TextColor3")),
@@ -4499,7 +4718,7 @@ local function info_box_new(section: Section, props: InfoBoxProps): InfoBox
 			TextSize = fontSizes.body, --test
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
-			theme_tag = "Primary", 
+			theme_tag = "Primary",
 			TextTransparency = section.content_transparency,
 		},
 	} :: Frame
@@ -4528,6 +4747,9 @@ local function input_new(section: Section, props: InputProps): Input
 	local input = {
 		kind = "input" :: "input",
 
+		Siblings = {},
+		sibling = false,
+
 		window = window,
 		tab = tab,
 		section = section,
@@ -4554,6 +4776,41 @@ local function input_new(section: Section, props: InputProps): Input
 		end
 	end
 	input.Listen = toggle_listen
+
+	local _index = 1;
+	local function add_sibling<T>(self: Input, child: T & SiblingElement): T
+		if (child.sibling) then --// already is a sibling
+			return;
+		end
+
+		table.insert(input.Siblings, child);
+		local child_frame = cloneref(child.instance:FindFirstChildOfClass("Frame"));
+		local main_frame = cloneref(self.instance:FindFirstChildOfClass("Frame"));
+
+		local connections = getconnections(self.instance.Activated)
+		for _, conn in connections do
+			conn:Disconnect();
+		end
+
+		child_frame.Parent = main_frame;
+
+		child_frame.LayoutOrder = _index*10;
+		_index += 1;
+
+		child.instance:Destroy();
+		child.instance = child_frame;
+		child.sibling = true;
+
+		return child;
+	end
+
+	local function register_siblings<T>(self: T, ...: SiblingElement): T
+		for _, element in {...} do
+			add_sibling(self, element)  -- your internal function
+		end
+		return self
+	end
+	input.AddSiblings = register_siblings;
 
 	ELEMENT_FLAG(input :: Input, section, props)
 
@@ -5001,7 +5258,7 @@ local function window_new(self: Library, props: WindowProps): Window
 		end
 	end
 
-	local function window_maximize(self: Window)	
+	local function window_maximize(self: Window)
 		if not self.Minimized then
 			return
 		end
@@ -5057,17 +5314,17 @@ local function window_new(self: Library, props: WindowProps): Window
 		if not httpRequest or not name then
 			return
 		end
-		
+
 		local url = string.format('https://raw.githubusercontent.com/LovelySoftworksLLC/Lovely/refs/heads/main/SLR2/Icons/%s.png', name);
 
 		local imageDir = `{image_directory}/{name}.png`
 
-		if not isfile(imageDir) then			
+		if not isfile(imageDir) then
 			local response = httpRequest { Url = url, Method = "GET" }
 
-			if response and response.Body then 
+			if response and response.Body then
 				writefile(imageDir, response.Body)
-			end 
+			end
 		end
 
 		return getcustomasset and getcustomasset(imageDir)
@@ -5133,7 +5390,7 @@ local function window_new(self: Library, props: WindowProps): Window
 
 		if not config then
 			return
-		end 
+		end
 
 		return config
 	end
@@ -5150,7 +5407,7 @@ local function window_new(self: Library, props: WindowProps): Window
 
 		if not config then
 			return
-		end 
+		end
 
 		return config
 	end
@@ -5158,7 +5415,7 @@ local function window_new(self: Library, props: WindowProps): Window
 	-- this function is automatically called after all elements are created inside the main script. new users will also have this executed (and they dont have any cfg files)
 	local function window_load_config(self: Window, name: string?)
 		if not name then
-			return 
+			return
 		end
 
 		ensure_folder(dir)
@@ -5192,7 +5449,7 @@ local function window_new(self: Library, props: WindowProps): Window
 			end
 
 			local config_name = string.match(file_name, "([^/\\]+)%.%w+$")
-			if not config_name then 
+			if not config_name then
 				continue
 			end
 
@@ -5264,7 +5521,7 @@ local function window_new(self: Library, props: WindowProps): Window
 			if not theme_name then
 				-- unable to get a valid theme name
 				continue
-			end 
+			end
 
 			window.themes[theme_name] = des_theme(content)
 		end
@@ -5375,14 +5632,14 @@ local function window_new(self: Library, props: WindowProps): Window
 	table.insert(cleanups, function()
 		minimize_connection:Disconnect()
 	end)
-	
-	
+
+
 	-- MOBILE TOGGLE
 	local mobile_toggle: ImageLabel
-	
-	do 
+
+	do
 		local mobile_toggle_position = motion(UDim2.new(0.5, -26, 0, 20))
-		
+
 		local drag_connection: RBXScriptConnection?
 		local function stop_drag()
 			if drag_connection then
@@ -5390,7 +5647,7 @@ local function window_new(self: Library, props: WindowProps): Window
 				drag_connection = nil
 			end
 		end
-		
+
 		local function start_drag()
 			stop_drag()
 
@@ -5405,7 +5662,7 @@ local function window_new(self: Library, props: WindowProps): Window
 				mobile_toggle_position:spring(new_position, springs.fast_soft)
 			end)
 		end
-		
+
 		mobile_toggle = create "ImageLabel" {
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
@@ -5417,8 +5674,8 @@ local function window_new(self: Library, props: WindowProps): Window
 			Size = UDim2.fromOffset(52, 52),
 			SliceCenter = Rect.new(47, 47, 172, 179),
 			ZIndex = 0,
-			theme_tag = "WindowShadow",                         
-			
+			theme_tag = "WindowShadow",
+
 			create "TextButton" {
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				AutoButtonColor = false,
@@ -5428,7 +5685,7 @@ local function window_new(self: Library, props: WindowProps): Window
 				SizeConstraint = Enum.SizeConstraint.RelativeYY,
 				Text = "",
 				theme_tag = "ContentContainer",
-				
+
 				InputBegan = function(input: InputObject)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
 						start_drag()
@@ -5440,7 +5697,7 @@ local function window_new(self: Library, props: WindowProps): Window
 						stop_drag()
 					end
 				end,
-				
+
 				MouseButton1Click = function()
 					window_toggle_minimized(window :: Window)
 				end,
@@ -5532,20 +5789,20 @@ local function window_new(self: Library, props: WindowProps): Window
 			notification_title_transparency:spring(get_themed_property(window :: Window, "Primary", "TextTransparnency") or 0, springs.soft)
 			notification_content_transparency:spring(get_themed_property(window :: Window, "Secondary", "TextTransparnency") or 0, springs.soft)
 			box_bg_transparency:spring(get_themed_property(window :: Window, "Box", "BackgroundTransparency"), springs.soft)
-			box_text_transparency:spring(get_themed_property(window :: Window, "Box", "TextTransparency"), springs.soft)	
+			box_text_transparency:spring(get_themed_property(window :: Window, "Box", "TextTransparency"), springs.soft)
 			element_bg_transparency:spring(get_themed_property(window :: Window, "Element", "BackgroundTransparency"), springs.soft)
-			element_text_transparency:spring(get_themed_property(window :: Window, "Element", "TextTransparency") or 0, springs.soft)		
-			exit_stroke_transparency:spring(get_themed_property(window :: Window, "WindowStroke", "Transparency"), springs.soft)	
+			element_text_transparency:spring(get_themed_property(window :: Window, "Element", "TextTransparency") or 0, springs.soft)
+			exit_stroke_transparency:spring(get_themed_property(window :: Window, "WindowStroke", "Transparency"), springs.soft)
 		else
 			exit_bg_transparency:spring(1, springs.soft)
 			notification_transparency:spring(1, springs.soft)
 			notification_title_transparency:spring(1, springs.soft)
 			notification_content_transparency:spring(1, springs.soft)
 			box_bg_transparency:spring(1, springs.soft)
-			box_text_transparency:spring(1, springs.soft)	
+			box_text_transparency:spring(1, springs.soft)
 			element_bg_transparency:spring(1, springs.soft)
 			element_text_transparency:spring(1, springs.soft)
-			exit_stroke_transparency:spring(1, springs.soft)	
+			exit_stroke_transparency:spring(1, springs.soft)
 		end
 	end
 
@@ -5723,7 +5980,7 @@ local function window_new(self: Library, props: WindowProps): Window
 	local clamped_minimize_transparency = clamped_motion(minimize_transparency, 0, 1)
 
 	local function handle_state_change(obj: string, state: string)
-		local transparency: Motion<number> = if obj == "minimize" then minimize_transparency else close_transparency 
+		local transparency: Motion<number> = if obj == "minimize" then minimize_transparency else close_transparency
 
 		transparency:spring(if state == "hover" then 0 else 1, springs.fast_soft)
 	end
@@ -6016,7 +6273,7 @@ local function window_new(self: Library, props: WindowProps): Window
 
 	task.wait(0.4)
 	loading:Destroy()
-	
+
 	if UserInputService.TouchEnabled then
 		mobile_toggle.Parent = GLOBAL_GUI
 	end
