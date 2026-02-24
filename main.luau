@@ -6260,23 +6260,25 @@ local function window_new(self: Library, props: WindowProps): Window
 		window_load_theme(window :: Window, theme)
 	end
 
-	loading_transparency:spring(0, springs.super_soft)
-	loading_scale:spring(1, springs.soft)
+	task.spawn(function()
+		loading_transparency:spring(0, springs.super_soft)
+		loading_scale:spring(1, springs.soft)
 
-	task.wait(1.8)
+		task.wait(1.8)
 
-	body_transparency:spring(0, springs.fast_soft)
-	container_transparency:spring(get_themed_property(window :: Window, "WindowShadow", "ImageTransparency"), springs.fast_soft)
-	stroke_transparency:spring(get_themed_property(window :: Window, "WindowStroke", "Transparency"), springs.fast_soft)
+		body_transparency:spring(0, springs.fast_soft)
+		container_transparency:spring(get_themed_property(window :: Window, "WindowShadow", "ImageTransparency"), springs.fast_soft)
+		stroke_transparency:spring(get_themed_property(window :: Window, "WindowStroke", "Transparency"), springs.fast_soft)
 
-	repeat task.wait() until body_transparency:isComplete()
+		repeat task.wait() until body_transparency:isComplete()
 
-	task.wait(0.4)
-	loading:Destroy()
+		task.wait(0.4)
+		loading:Destroy()
 
-	if UserInputService.TouchEnabled then
-		mobile_toggle.Parent = GLOBAL_GUI
-	end
+		if UserInputService.TouchEnabled then
+			mobile_toggle.Parent = GLOBAL_GUI
+		end
+	end)
 
 	return window
 end
